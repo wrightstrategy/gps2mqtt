@@ -1,0 +1,744 @@
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=591ea5679bfdb4737fd76dd7c503758cd6cf3d189207ee1ac48e997ea98a9c24 -->
+This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
+
+# Coding Universe — reference
+
+This document is the **generated/delivered reference payload** for Wright Strategy development
+conventions (ADR-016). It is **not** always-resident context: agents and humans **read it on
+demand** when a resident tripwire in `conventions/dev.md` (stamped into each repo's `AGENTS.md`
+as the `ws:dev` block, and delivered here as `docs/agents/ws-dev-reference.md`) gates a task.
+
+Content below was relocated from the former monolithic `conventions/dev.md`. Prefer the anchors
+linked from resident tripwires.
+
+## Parallel and isolated work
+
+Ordinary work is written in-session by the agent holding the conversation. When a task
+genuinely earns parallelism or isolation — independent slices that can run concurrently, a
+long batch, or work that must not touch the session checkout — run it through **Orca
+orchestration** inside a ready runtime (`orca status --json`): visible `worker-start` /
+`check --wait`, one worktree per worker, results verified by the session agent with real
+commands, never trusted from a worker's self-report. Orca's shipped skills carry the
+invocation mechanics; this payload does not duplicate them. Workers never dispatch onward.
+However the bytes were produced, they meet the same cross-family review gate
+(`ws-dev:pr-review`) before the human merge gate.
+
+### Worker release before teardown
+
+The installed, version-matched Orca orchestration skill (`orca skills get orchestration`) and
+command help are authoritative for lifecycle command spellings. After every accepted
+`worker_done`, succeeded or failed, the coordinator settles the terminal's next owner before
+acknowledging another delivery, waiting again, or ending the turn. Choose exactly one:
+
+```text
+orca orchestration worker-start --task <next-task-id> --terminal <handle> --json
+orca orchestration worker-retain --dispatch <dispatch-id> --json
+orca orchestration worker-release --dispatch <dispatch-id> --json
+```
+
+Reuse transfers the exact terminal to an immediate follow-up dispatch. Retention records an
+operator-requested exception; it is not an implicit default. Otherwise release the worker.
+Never keep a completed worker live merely to inspect its output: release preserves the archive,
+which remains readable with `orca orchestration worker-read --dispatch <dispatch-id> --json`.
+
+Release is post-completion settlement, not cancellation. Never release in reaction to a timeout,
+heartbeat, status, question, escalation, TUI-idle state, or a stale or rejected `worker_done`.
+For `release_pending` or `release_unknown`, follow the receipt's recovery action; never substitute
+`orca terminal close`. Use `worker-stop` or `worker-abandon` only as conditional recovery when
+`worker-show` proves a failed, stopped, or unknown dispatch, and do not treat an unknown state as
+disposable without operator confirmation. Never run `orca orchestration reset` while any dispatch
+is active.
+
+A worktree or terminal that owns an active dispatch is never removed: reuse, retain, or release
+the worker first, then perform any teardown. Worktree and branch removal remain human actions;
+nothing automates those destructive steps. When a terminal predates its dispatch — for example,
+the agent terminal launched by `orca worktree create --agent` — `worker-release` returns
+`retained` with reason `external_terminal` and takes no process action. The release still settles
+the dispatch and remains required; the operator can then remove the worktree.
+
+The [Orca worktree checkpoints](#orca-worktree-checkpoints) govern card state: release the worker
+before the card is completed or the worktree is removed, while `completed` itself remains reserved
+for after merge.
+
+
+## Orca worktree checkpoints
+
+The installed, version-matched Orca CLI (`orca skills get orca-cli` and
+`orca worktree --help`) is authoritative for command and status spellings; the examples below
+show the supported surface when this convention was recorded.
+
+Create an Orca worktree from its Linear issue so the suggested branch, issue context, and links
+carry into the workspace:
+
+```text
+orca worktree create --linear-issue <ID-or-URL> ...
+```
+
+Link an existing worktree when necessary:
+
+```text
+orca worktree set --worktree active --linear-issue <ID> --json
+```
+
+At each meaningful transition — implementation complete, checks passing, PR opened, waiting on
+review, blocked, and done — update both the worktree comment and board card status. Read the
+current comment first and preserve operator-written context by appending or amending it; never
+clobber it:
+
+```text
+orca worktree current --json
+orca worktree set --worktree active --comment "<short current text>" --workspace-status <status> --json
+```
+
+Use `in-progress` while implementing, `in-review` once the PR is open and awaiting review, and
+`completed` only after merge. Keep comments short and current; a blocked comment says what is
+blocked and on whom. Orca metadata updates are best-effort and never block the work itself.
+
+
+## Repository documentation — full narrative
+
+**Every repository must document the system it owns.** At minimum, its `README.md` explains the
+repository's purpose, setup, and primary usage, and its `AGENTS.md` maps agents to the current
+sources of truth. When behavior, interfaces, configuration, architecture, schemas, or operations
+are non-trivial, maintain the corresponding living/reference documentation; do not leave that
+truth only in code, issue threads, or historical plans.
+
+- Documentation is part of the change. Update affected living/reference docs in the same change
+  that changes the implementation.
+- Preserve historical documents as history. The ADR mechanism is retired (documentation
+  standard §6): every `docs/adr/` directory is a frozen archive — never write, supersede, or
+  re-status an ADR. A decision lands as an edit to the owning living document plus a dated
+  entry in the repo's `docs/decisions.md`, in the same PR that implements it.
+- Before finishing implementation work, invoke **`ws-dev:doc-audit`**. The skill contains the
+  organization documentation standard and semantic reconciliation workflow. Update the affected
+  docs, or report `docs not needed: <specific reason>` when the change genuinely leaves documented
+  behavior and interfaces unchanged.
+
+This is a local agent responsibility, not a documentation-specific CI or credentials requirement.
+
+
+## Work management — leaving the graph honest
+
+Work filing and planning live in **Linear** (ADR-029; rulebook:
+`wrightstrategy/bridge` → `docs/standards/work-management.md`). There is no planning agent:
+under One Front Door the plan is *authored* at a planning session, not inferred from metadata,
+so the committed projects in target-date order are the plan and Linear's own views are the
+plate. The Chief-of-Staff snapshot layer that used to compute one is retired (ADR-030).
+
+Keeping work state honest is still part of finishing the work, not overhead — it is what the
+operator and every future reader actually read: link PRs to their Linear issue so state syncs
+on merge, assign the carrier, close shipped work with a one-line outcome (never a session log —
+point-in-time narrative later contradicts the graph), and record real blocking relations, never
+invented ones. Issue **state** has one writable home — Linear — so don't restate it in markdown.
+
+The GitHub-era planning vocabulary — milestones, the label allowlist, the plate-rank formula
+(bridge#485) — is retired outright. Timing lives only on projects; issues carry no milestone
+or horizon.
+
+
+## GitHub Actions
+- Pin every third-party Action and reusable workflow by **full commit SHA**. Keep the human
+  version in a comment if helpful (for example, `# docker/build-push-action v7.2.0`) and let
+  Dependabot/Renovate raise update PRs.
+- Set `permissions: { contents: read }` at workflow or job scope, then grant only the extra
+  scopes a job needs (`packages: write`, `id-token: write`, `attestations: write`, etc.).
+- Prefer OIDC or GitHub App tokens over long-lived cloud/registry credentials. Never pass
+  secrets through Docker build args; use BuildKit secret mounts.
+- Treat `pull_request_target` as privileged: do not check out or execute untrusted PR code in
+  that context.
+- **Node runtime deprecations bite recurringly.** GitHub periodically forces JS actions onto a
+  newer Node major (e.g. Node 20 → 24, forced 2026-06-16) and emits deprecation warnings before.
+  Get ahead of it: keep Renovate raising action-bump PRs, and to validate/opt-in early set
+  `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` (or the then-current equivalent) as a workflow-level
+  `env:`. Drop the override once every pinned action is native to the new runtime.
+- When a release/automation token must reach an **org-owned** repo, use a **GitHub App
+  installation token** (`actions/create-github-app-token` with the org App's client ID/private-key),
+  not a fine-grained PAT — a PAT scoped to a personal account 404s on org repos, and App tokens
+  also trigger downstream workflows (unlike the default `GITHUB_TOKEN`).
+
+### Concurrency and merge queues
+
+GitHub retains at most one running and one pending workflow run in a concurrency group. When a
+third run enters, GitHub cancels the existing pending run even when `cancel-in-progress` is
+`false`. The cancellation flag protects the running run; it does not make a shared default-branch
+group a durable queue.
+
+Keep the one-run-per-change rule: required checks run on the PR head, and the default-branch push
+does not repeat those same build/test/scan jobs. For workflows that produce an artifact from each
+shipped commit, combine a per-ref PR group with cancellation and a per-SHA default-branch group:
+
+```yaml
+concurrency:
+  group: <name>-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+```
+
+A new PR push then supersedes the older run. Every default-branch commit instead has a unique
+group, so its run can be neither cancelled while running nor displaced while pending. This matters
+when graphify refresh, a release-PR tool such as the deprecated release-please, or a docs/lockfile
+bot pushes an automation commit just after a merge; a saturated runner pool makes it likely that the merge build is still pending when the
+automation run arrives. The observed result was a release tag pointing at a commit for which no
+image had been built.
+
+Default-branch deploy workflows need a different concurrency choice. A per-SHA group combined with
+a commit-pinned deploy lets runs overlap and finish out of order, so the target can settle on an
+older commit. Do not use that combination. Either:
+
+- **Serialize:** use a constant group, or one keyed by `github.ref`, with
+  `cancel-in-progress: false`. GitHub may displace an intermediate pending deploy, but the newest
+  run still executes. Serialization alone does **not** converge a commit-pinned deploy: runs enter
+  the group by prerequisite completion, not commit order, and GitHub does not guarantee ordering
+  within a group, so an older run can still land last. Convergence under this option requires that
+  the deploy resolve the target's desired state at execution time (pair the constant/ref group with
+  a tip-resolving deploy), or you accept that the target may sit on an older commit. This is
+  simplest when deploys are slow or not idempotent.
+- **Use per-SHA with a converging deploy, *and* serialize the apply:** retain a group per commit so
+  no deploy is dropped, and deploy the default branch's tip instead of the run's own commit. Note
+  what this alone does **not** buy: checking out the tip at job start is still a snapshot. Two
+  overlapping runs each deploy the tip they saw when they started, so the one that finishes last —
+  possibly the older — still wins. Convergence requires that only one deploy *execute* at a time:
+  a single deploy runner, a GitHub Environment concurrency limit, or an explicit lock on the
+  target. Resolve the tip inside that serialization, not before it. `wrightstrategy/homelab`'s
+  `deploy-compose.yml` is the worked example (homelab#1184) — and it converges because exactly one
+  runner carries the `homelab` label in its deploy group, not because tip-at-checkout is
+  order-independent on its own.
+
+When a repository enables a merge queue, every workflow that produces a required status context
+must also run for queue entries:
+
+```yaml
+on:
+  pull_request:
+  merge_group: { types: [checks_requested] }
+```
+
+Otherwise the required context never arrives and the queue cannot complete the entry. Queue runs
+must not supersede one another: cancellation of a required check fails that entry and makes the
+queue thrash instead of drain. Gate cancellation to `pull_request` and keep the group unique per
+entry; `github.ref` is unique for each `merge_group` entry (and `github.sha` in the general recipe
+above is unique too). Do not key the group only with `github.event.pull_request.number`: that value
+is empty for `merge_group`, collapsing every queue entry into one shared group.
+
+### Repository settings
+- **Delete head branch on merge is on** for every org repo (`delete_branch_on_merge: true`).
+  Merged PR branches must not accumulate. `repo-create` enables it on every new repo; existing
+  repos must match. Toggle: `gh repo edit <owner>/<repo> --delete-branch-on-merge`.
+- **Human repository access** follows the repository access standard
+  (`wrightstrategy/bridge` → `docs/standards/repository-access.md`): any repo that ships a
+  marketplace-distributed plugin must be readable by every human in `roster.toml`; other private
+  repos stay invite-only (`default_repository_permission: none` is load-bearing). Agents propose
+  grants; owners apply them.
+
+### Actions static analysis (zizmor)
+- Every registered **private** app repo runs **zizmor** on `.github/workflows/` (generated
+  workflow + policy via repo-bootstrap `--payloads` / the central audit fan-out).
+- Policy encodes the first-party moving-ref rule (same as prose above):
+  `wrightstrategy/bridge/*` and `wrightstrategy/.github/*` → **ref-pin** (`@vX` for CI standards,
+  `@main` for the org caller stub); everything else → **hash-pin**. Default
+  zizmor (blanket hash-pin) fails these moving first-party refs — never ship the linter without
+  this policy (bridge#145, quiltshowcase#388).
+- Payload exclusions are **per-payload**: homelab is excluded from the generated **Renovate**
+  payload because it owns that configuration locally, but still receives the **zizmor** payload
+  like every other registered private repo
+  so pin/checksum bumps in the generator fan out (bridge#262).
+
+### Runner placement & the minute budget
+GitHub-hosted minutes are a **fixed monthly budget** (the org allowance, currently 3,000 Linux
+min), not a free resource — and GitHub **bills every job rounded up to a whole minute**, so many
+short, parallel, or scheduled jobs add up far faster than wall-clock suggests. **Self-hosted
+runners are unlimited and free.** Spend the budget deliberately.
+- **The isolated CI VM pool** (`runs-on: [self-hosted, ci]`) serves tests, lint, SAST, secret
+  scans, service containers, PR image builds, trusted branch builds, releases, and scheduled
+  maintenance. Each job gets a fresh Ubuntu 24.04 VM with local Docker, normal passwordless
+  `sudo`, and public internet access, then the VM is destroyed. It has no route to the LAN,
+  WireGuard, k3s, Nimitz, or 1Password and no standing credentials. `setup-*` actions,
+  `apt-get`, Docker actions, and `services:` work exactly as on `ubuntu-latest`; do not add
+  runner-specific workarounds or maintain a custom CI image. The shared release workflow
+  already selects the CI pool.
+- **Deployment runners:** jobs that must reach the homelab LAN or QuiltShowcase over WireGuard
+  use the `Homelab-deploy` runner group plus the appropriate label (`homelab` or
+  `quiltshowcase`). Do not target a deployment runner by label alone — an unrelated runner can
+  share that label. Never store deploy credentials in the VM image or runner configuration;
+  inject them from GitHub secrets for the individual job.
+- **GitHub-hosted is the explicit exception:** untrusted/fork PR code from public repositories,
+  the organization-wide agent workflow, external deadman monitoring that must survive Nimitz
+  failure, and operating-system matrices that require GitHub macOS/Windows images. Document the
+  reason beside every remaining `ubuntu-*`, `macos-*`, or `windows-*` assignment. Public
+  repositories are intentionally denied access to the `Homelab-runners` group.
+- **Runner implementation belongs to homelab:** the Nimitz VM definitions, network isolation,
+  registration-token minter, lifecycle service, monitoring, and operations runbook live in
+  `wrightstrategy/homelab`. Application repos select a trust tier; they do not manage runner hosts.
+- **Path-gate expensive jobs** (image builds, e2e) so app-only changes skip them — but **never**
+  path-gate a *required* status check: a skipped required check hangs the PR at "Expected". Gate
+  the job with a computed `needs.<detector>.outputs` condition instead of a top-level `paths:`
+  filter when the workflow also hosts a required check.
+- **Scheduled workflows** run on self-hosted, at the cadence actually needed (a liveness probe
+  every few hours, not every few minutes).
+- **A minute spike during heavy development is a smell, not a cost of doing business.** It means
+  the pipeline does too much per change (redundant jobs, no `cancel-in-progress`, an unbounded
+  matrix, an image rebuilt on both PR and merge) — fix the pipeline, don't absorb the overage.
+  When a month trends over, read per-repo usage with the **parameterized** billing endpoint —
+  `GET /organizations/<org>/settings/billing/usage?year=<Y>&month=<M>` — and attack the top repo
+  first. Three traps (observed 2026-07, `wrightstrategy/bridge#118`): **(1)** the
+  unparameterized endpoint returns coarse rollup rows whose `repositoryName` is an arbitrary
+  stamp, not real attribution — always pass `year`/`month` (observed behavior, not a documented
+  GitHub contract; re-verify against the rollup if numbers look off); **(2)** filter
+  `unitType == "Minutes"` — `product == "actions"` also carries `GigabyteHours` storage rows
+  that corrupt a minutes sum; **(3)** don't filter to `sku == "Actions Linux"` — Windows/macOS
+  SKUs bill at 2×/10× multipliers and silently vanish from a Linux-only view. The 3,000-minute
+  allowance is applied as a **monetary discount**, so summed `netAmount > 0` — not a minutes
+  comparison — is the exact "we are being charged" signal.
+
+
+## Versioning & releases
+
+**Standard by language.** Python repos release with **python-semantic-release** in tag-only mode,
+run from a dispatched workflow. JS/TS repos release with **Changesets**. **release-please is
+deprecated:** no new adoption; a repo still on it migrates the next time its release tooling is
+touched. Known remaining consumers are bridge's own path-scoped `ci/` driver and the reusable
+`release.yml` workflow it publishes; they follow the same rule. Design record and pilot:
+`wrightstrategy/quiltshowcase` `docs/project/release-operating-model-spec.md` (decisions D8, D14,
+D20, D21); QuiltShowcase piloted the model before it became the convention.
+
+**Common to every tool:**
+- The version lives in **one** place (`pyproject.toml` / `package.json`) and code reads it
+  dynamically — `importlib.metadata.version(...)` in Python, an import from `package.json` in
+  JS/TS — never a hardcoded version literal in source or tests, or the first bump breaks the build.
+- Nothing tags by hand. The release workflow is the only thing that creates a `v*` tag; a
+  hand-pushed tag bypasses the notes, the digest append, and the readiness check.
+- The image lane is unchanged: `container-build` release mode resolves the `sha-<full>` digest the
+  branch build already pushed for the tagged commit and promotes `:X.Y.Z` / `:X.Y`. Build once, retag.
+
+### Python: python-semantic-release, tag-only, from a dispatched workflow
+
+- **Why this shape.** Tag-only mode tags a commit the branch already built and validated, so
+  build-once-retag needs no release commit. There is no release PR, so no CI round per refresh
+  (QuiltShowcase measured 15.5% of its CI runs going to release-PR refreshes before it batched them).
+  Config is Python-native, a `[tool.semantic_release]` table in `pyproject.toml`. `remote.type`
+  supports `github` and `gitea`, so the setup survives a Forgejo move with one value changed.
+  Versions are computed from the tags reachable in the branch's own history, which is exactly what a
+  `release/X.Y` maintenance lane needs. Explicit forcing flags (`--minor` / `--major`) cover the
+  numbering edge case below.
+- **The workflow.** `workflow_dispatch` on `main` or a `release/X.Y` branch with inputs `dry_run`
+  (default **true**: print the next version and the notes, change nothing — an accidental click does
+  nothing), `bump` (`auto` | `minor` | `major`), and an optional `prerelease` token. A real cut
+  computes the version from Conventional Commits since the last tag in the branch's history, tags the
+  branch tip without adding a commit, pushes the tag, and creates the GitHub Release with generated
+  notes. The existing release lane then runs unchanged.
+- **Constraints.** Pin python-semantic-release by exact version in the workflow (for example
+  `uvx python-semantic-release==X.Y.Z`); a floating version is a supply-chain and behavior drift.
+  Push the tag with the org bot **App token**, never `GITHUB_TOKEN`: a tag pushed with the default
+  token does not trigger the downstream release workflow (the OPS-1 lesson).
+- **Config (`pyproject.toml`):** tag format `v{version}`; the conventional-commit parser; no version
+  files (see the dynamic-read rule above); branch patterns for `main` and `release/.*`;
+  `remote.type = "github"`. `CHANGELOG.md` is retired — the Release body is the changelog, and the
+  committed file was what forced the release commit. **The tool's defaults do not produce the
+  version consequences below; set them explicitly.** The conventional parser's default
+  `patch_tags` is `["fix", "perf"]`, and the default changelog excludes nothing, so the table below
+  requires `[tool.semantic_release.commit_parser_options]` with `minor_tags = ["feat"]` and
+  `patch_tags = ["fix"]`, and the release-notes **template** (the same custom template that renders
+  the "Deployment changes" section below) omits the non-releasing types from the grouped change
+  sections. **Do not use `changelog.exclude_commit_patterns` for that filtering:** it removes
+  matching commits before the template runs, so a `Deploy:` trailer carried by a `chore:`, `ci:`,
+  or `build:` commit would never reach the deployment section. The template scans every commit in
+  the release for `Deploy:` trailers and filters by type only when grouping. Verified against
+  python-semantic-release 10.6.2; re-check the parser defaults when bumping the pin.
+- **Version consequence.** `fix:` → patch, `feat:` → minor, `!` or a `BREAKING CHANGE:` footer →
+  major. `build`, `chore`, `ci`, `docs`, `perf`, `refactor`, `style`, and `test` neither release nor
+  appear in the notes (`perf` is deliberately not a release: nothing a customer sees changed). `fix:`
+  means a defect in *released* behavior; corrections to a feature that has not shipped stay inside
+  that feature's own commits, or every release's notes are padded with fixes to things no customer
+  saw. `!` is reserved for operator-breaking changes (a required new env var, a manual migration
+  step, a changed deploy order) and the body says what the deployer does.
+- **The one numbering edge case.** A maintenance line has cut `2.1.1` while `main` has seen only
+  `fix:` commits since `2.1.0`, so `main`'s derived next version is also `2.1.1`. The dry run shows
+  it. Rule: while a maintenance line is open, `main`'s next release is at least the next minor —
+  pass `bump: minor`.
+
+### JS/TS: Changesets
+
+- Each PR that changes published behavior adds a changeset file; the Changesets action maintains the
+  version PR and, on merge, tags and publishes. The version lives in `package.json` only, read
+  dynamically. The release lane (build once on `main`, retag on `v*`) is the same as for Python.
+
+### The `Deploy:` trailer and release notes
+
+- **Any deploy-affecting commit ends with a `Deploy:` trailer** — a new or removed environment
+  variable, a migration, a scheduled job, an ordered cutover, or an out-of-app step such as a DNS
+  record or a webhook destination. One trailer line per item, in imperative voice, naming what the
+  deployer does; the body may say more.
+- **Release notes render the `Deploy:` lines as the leading "Deployment changes" section**, then
+  changes grouped by type and scope, and the release lane appends the image index digest to the
+  Release body. This is what makes the resident "a deployer bumps a pin without reading source" rule
+  mechanical: a deployer reads the top of the Release and the digest at the bottom, nothing else.
+- Repos on python-semantic-release customize the changelog template to produce that section; a repo
+  on another tool renders the same section by whatever means its tool has. The section is the
+  contract, not the template. Whatever the tool, the trailer scan covers **every** commit in the
+  release, including non-releasing types: a `chore:` that adds a scheduled job still deploys.
+- A promotion check may diff environment **key names** across tiers (next / staging / production)
+  and list the accumulated `Deploy:` items since the production pin. Names only — values never leave
+  their tier. QuiltShowcase's `promote-check` is the worked example.
+
+### Maintenance-branch lane: `release/X.Y`
+
+- **Create lazily, from the production pin.** `release/X.Y` exists only when production needs a fix
+  before the next minor. Read what production runs (the deployed image pin names the version and
+  digest), then create the branch from that tag. Never pre-create: staging is evaluation, not a
+  promise to promote, and production may sit on 2.1 while `main` reaches 2.5.
+- **Fix there first.** Branch from `release/X.Y`, commit as `fix(scope): …`, PR into `release/X.Y`
+  under the same gate as `main`. Merge, then cut from the maintenance branch (`Cut release` on
+  `release/X.Y`); staging deploys it; run the promotion check; pin it in production. The fix ships
+  alone — `main`'s unfinished work cannot follow it.
+- **Forward-port in the same session.** Cherry-pick the fix commit onto a branch from `main` and open
+  a PR. Never merge in the other direction. A hotfix migration keeps its file name so `main`'s
+  migration-leaf check forces the merge migration. If a newer cut is waiting on staging and you still
+  intend to ship it, cherry-pick onto its `release/X.Y` too and cut a patch; if you intend to skip it,
+  do nothing. This is the step people forget, which is why it is a rule.
+- **What the release lane needs, per repo.** `container-build` release mode is already
+  branch-agnostic — it resolves `sha-<full>` for the tagged commit regardless of which branch built
+  it — and the reusable workflow does not change for this. The repo-owned pieces: run the branch-mode
+  image build on `release/**` applying only the mandatory commit lookup tag (no `:edge` / `:next`, no
+  deploy); extend the PR-and-required-checks ruleset to `refs/heads/release/*` with branch creation
+  exempt from required checks so a branch can be created from a tag; add `release/**` to any push
+  triggers that gate `main` (migration-leaf, zizmor); and make the repo's readiness check accept a
+  build from `main` **or** from the `release/*` branch that contains the tagged commit.
+- **Stop promoting `:latest`** once a repo can have two release lines: it can move backward, and
+  nothing should consume it — consumers pin a digest.
+- **Rollback** pins an older released tag and digest. It never uses a branch; images and tags are
+  permanent. **Cleanup:** a `release/X.Y` older than the production pin is flagged for a human
+  (planning brief), never auto-deleted; deletion loses nothing because the tags keep every commit.
+- Repo-local procedures live in QuiltShowcase's `release-ops` skill (`cut` with dry run first,
+  `hotfix start`, `hotfix forward-port`, `promote-check`, `branches`). It lifts into the ws-dev plugin
+  when a second repo needs it (earn-its-place); until then, copy the procedure, not the code.
+
+
+## Container images & CI
+Registry: `ghcr.io/wrightstrategy/<repo>`. Builds run in GitHub Actions. The cluster is amd64.
+These build/release standards are encoded as **versioned reusable workflows** in
+`wrightstrategy/bridge` (`container-build`, `release`, `osv-scan`, `lockfile-refresh`, and
+`homelab-bump`, introduced in v2.1.0). Their
+canonical sources live under `ci/` and are generated into the root workflow namespace consumed as
+`wrightstrategy/bridge/.github/workflows/<name>.yml@vX`. Consume the shared workflow rather than
+re-implementing it per repo, so a standard change propagates on the next run.
+The `homelab-bump` workflow automatically commits enrolled image pins after a successful
+stable release. Homelab owns its target mapping and activation policy; app callers supply
+the release tag and App configuration. Its contract is `wrightstrategy/bridge` →
+`ci/docs/homelab-bump.md`. Pin the published workflow commit SHA; it is consumed directly
+from git, not from the separately downloadable ws-dev plugin archive.
+- **Image:** multi-stage; language-native deps (`uv sync --locked --no-dev` /
+  `bun install --frozen-lockfile`); pin the base image **by digest**
+  (`python:3.12-slim@sha256:…`); **non-root** user; `EXPOSE` the service port. Follow the
+  official `astral-sh/uv-docker-example` (BuildKit cache mounts, `UV_COMPILE_BYTECODE=1`,
+  `--no-install-project` / `--no-editable` layering) for fast, reproducible builds. Add a
+  tight `.dockerignore`. If the app owns migrations, bundle the migration tool + scripts so a
+  deploy runs them from the same image. Wire the runtime health signals into platform probes.
+- **Platforms:** `linux/amd64` by default; add `linux/arm64` only when a target host needs it
+  (one-line `platforms:` change).
+- Stamp images with `docker/metadata-action` (`org.opencontainers.image.*` labels).
+- **Build once, then promote.** *Branch builds create releasable artifacts; release builds only
+  promote them.* An image is built, scanned, attested, and pushed **exactly once** — on the `main`
+  push — and a `v*` tag **relabels that same digest** (no rebuild), so the released image is
+  byte-identical to what was tested and deployed, and re-running a tag is idempotent.
+- **Trigger matrix:**
+  - PR → test gate (lint + tests) **and** build the image, but **never push** (validates the
+    Dockerfile early).
+  - push to `main` → after the gate, build + scan + push **by digest** (provenance + SBOM), then
+    promote a **mandatory commit lookup tag** (`sha-<full-commit-sha>`) + a rolling `:edge`. This
+    is the **only** place an image is built.
+  - `v*` tag (from the repo's release workflow — see Versioning & releases — never by hand) →
+    **retag-only**: resolve the digest the branch build pushed for the tagged commit, promote
+    `:X.Y.Z` / `:X.Y` (and `:latest` only while the repo has a single release line) for a stable
+    release (only `:X.Y.Z-<pre>` for a prerelease), and
+    **append the `sha256:` index digest to the GitHub Release body**. No rebuild, no re-scan. A
+    `v*` tag **must** point at a commit a branch build (`main` or `release/**`) already built —
+    releasing a never-built commit is a hard error (so tag-only repos add a default-branch build).
+- **Test-gate every build** with real integration tests where cheap (e.g. testcontainers), not
+  drift-prone mocks. **Never publish a release whose image build failed.**
+
+
+## Supply-chain integrity
+Required for every released image, and works regardless of repo visibility:
+- **OCI provenance + SBOM attestations** via `docker/build-push-action` (`provenance: mode=max`,
+  `sbom: true`) — BuildKit stores them with the image in the registry; no GitHub-plan
+  dependency. Because `mode=max` can expose build-arg values, keep secrets out of build args.
+- **Vulnerability scan gate** (`aquasecurity/trivy-action`) on the built image; fail on
+  **fixable** `CRITICAL,HIGH` (`ignore-unfixed: true`). No-fix-available base-image OS CVEs
+  aren't actionable and would otherwise block every release as new ones are disclosed — gate on
+  what you can actually remediate. Allowlist a specific fixable CVE only with written justification.
+- **Secret scanning** — every repo, regardless of visibility, runs **gitleaks** in two places:
+  a **pre-commit hook** (blocks a secret at commit time — the earliest catch and the free analog
+  to push protection) and a **CI gate** on PRs + the default branch. Use `gitleaks git` mode
+  (scans committed **history**, not the working dir) so a developer's gitignored local `.env`
+  stays out of scope; pair with branch protection so nothing reaches the default branch without
+  the gate. Prefer this OSS path over **GitHub Secret Protection** (GHAS secret-scanning SKU,
+  ~$19/active-committer/month on private repos) — don't pay for what gitleaks does for free on a
+  small private repo. Run the **pinned** gitleaks binary/container directly (avoid
+  `gitleaks/gitleaks-action`, which wants a free-but-annoying org `GITLEAKS_LICENSE`). Optionally
+  add a **scheduled** `trufflehog` deep scan for **verified** detection (it calls provider APIs to
+  confirm a found credential is actually live). On adoption, run a one-time full-history baseline
+  scan first to confirm nothing has already leaked.
+
+Stronger guarantees, **when available** (don't block on them):
+- **GitHub artifact attestations** (`actions/attest`) for image digests and release artifacts.
+  Private/internal repos require GitHub Enterprise Cloud; public repos work on current plans.
+- **Keyless image signing** with cosign (Sigstore, OIDC), always signing the **digest**, never
+  a tag. Public-good Sigstore works for private repos but records signing identity metadata in
+  the public Rekor log; decide per repo whether that is acceptable.
+- If signing/attestation is unavailable, the baseline remains OCI provenance + SBOM + Trivy.
+
+
+## Dependency updates
+
+Automated dependency updates are standardized org-wide by ADR-020. The policy is **five layers,
+ordered by value not effort**, and Renovate is the sole version-update engine. Every registered
+repository carries a thin `renovate.json` generated by `repo-bootstrap`; it extends the shared
+`renovate-config/default.json` preset so fleet policy has one inheritable source of truth.
+
+**Manager coverage follows repository contents.** The shared preset enables Bun, npm, PEP 621,
+GitHub Actions, Dockerfile, and the fleet's narrow custom-regex manager. Renovate discovers the
+applicable managers from each repository rather than requiring generated lockfile-specific entries.
+The preset groups routine non-major updates separately from major updates, keeps GitHub Actions
+SHA-pinned except for the deliberate first-party moving-ref policy, and authenticates to
+`npm.pkg.github.com` through its centrally managed `PACKAGES_READ_TOKEN` host rule. A repository may
+add only described `packageRules` and `ignoreDeps` in its generated thin config; the generator
+preserves that documented local seam and rejects mutations to the shared core.
+
+**The rollout invariant.** Value order is not activation order. **No automated update ecosystem —
+`github-actions` included — activates in a repo until that repo has a stable PR check and that check
+is required** (layer 1). The fleet posture is **owner-final** (ratified 2026-08-30): CI is required
+and no automation can bypass it, but `enforce_admins` stays false / the org-admin ruleset bypass
+stays open — the owner's merge button is the human gate, not a hole in it. Enabling update PRs into an ungated default
+branch recreates the incident this policy exists to prevent (a dependency bump merged past no gate);
+requiring a check that does not exist or is flaky freezes merges instead. A repo with no CI gets a
+check before it gets automation. Layer 1 before layer 4, per repo.
+
+**The five layers** (and what shipped):
+
+1. **Required status checks on the default branch, owner-final** (`enforce_admins: false`; the
+   only ruleset bypass is the owning admin — the live fleet posture since ADR-006 slice 3,
+   preserved by ADR-007/008 and what the scaffolder creates). Require a context that runs
+   unconditionally on `pull_request` — verified statically at source, not from past runs; a
+   path-filtered context qualifies only if the union of its lanes covers every PR. *Applied to all
+   active repos*; homelab additionally keeps `enforce_admins: true` by its own choice, with cost
+   control as a per-step classifier rather than a skipped required check.
+2. **Dependabot alerts + dependency graph org-wide**, via a security configuration ("Wright Strategy
+   baseline"), enforced and default for new repos. It must **not** enable secret scanning (the paid
+   GHAS SKU the org declines in favor of gitleaks) or `dependabot_security_updates` (update
+   automation, forbidden before layer 1). *Applied.*
+3. **Renovate access to private org packages.** The shared preset's `hostRules` consumes the
+   centrally managed **`PACKAGES_READ_TOKEN`** for `npm.pkg.github.com`. *Applied.*
+4. **Version updates through the shared Renovate preset and generated thin config.**
+   `repo-bootstrap` owns `renovate.json`; the preset owns fleet manager coverage, grouping, pinning,
+   and central package authentication. Bridge's generator additionally owns its source-only
+   graphify pin manager. *Shipped and activated fleet-wide.* homelab keeps its locally owned
+   Renovate configuration and is excluded only from the generated Renovate payload.
+5. **`osv-scanner` in CI on the `bun.lock` repos, pinned.** GitHub's dependency graph has no
+   resolution path for `bun.lock` (JavaScript is "graph jobs: NO"), so a vulnerability present **only
+   transitively** in a bun repo goes unreported; direct-dependency alerts still fire, and uv repos are
+   graph-covered and get **no** scanner. The **`osv-scan` reusable workflow** lives in `bridge`
+   (`.github/workflows/osv-scan.yml`, consumed `uses: …@vX`); it runs the version-pinned,
+   checksum-verified `osv-scanner` binary on self-hosted CI — **not** the vendor reusable workflow,
+   which uploads SARIF to code scanning (a GHAS SKU the org declines) and pins `ubuntu-latest`.
+   Per-repo rollout is **baseline before enforcement**: scan and report (`fail-on-vuln: false`) →
+   triage the backlog → record accepted findings as reviewed, time-bounded `osv-scanner.toml`
+   suppressions (`[[IgnoredVulns]]` with `ignoreUntil`) → flip `fail-on-vuln: true` and make the
+   check required. `bun audit` is rejected as the primary gate (npm-registry resolution at run time;
+   `--ignore` with no expiry or justification trail). *Live consumer set:* web-ui, chargealert,
+   sentinel, scuttlebutt (four; ADR-004 named six — proofyard and agent-ops are archived and drop
+   from the active set).
+
+Renovate raises update PRs but does not replace vulnerability scanning, so it is not a layer-5
+substitute. Dependabot alerts and the dependency graph remain enabled as security features, while
+`osv-scanner` covers the documented Bun transitive-dependency gap.
+
+**Check any future mandated toolchain against GitHub's dependency-graph support *empirically, before*
+standardizing it** — not from the docs support-table, which a reading got wrong twice. Enable the
+graph, pull the repo's SBOM, compare against the lockfile, and check whether known transitives of a
+direct dependency appear. Bun and uv were both adopted on ergonomics and both inherited this coverage
+question; only a probe of the live graph answers it.
+
+
+## Web UI — kit dependency mechanics
+
+Building or modifying a web app? Use the shared UI spine — don't reinvent it.
+- Repo: `~/Projects/web-ui` (GitHub: `wrightstrategy/web-ui`). Stack: Bun + SvelteKit + Svelte 5.
+- It is the **source of truth for web design standards**: `@wrightstrategy/ui` (semantic tokens +
+  components), the `create-app` scaffolder, the canonical SvelteKit template, and the design
+  canvas (`design/v1.0/` — when canvas and code diverge, the canvas wins).
+- Scaffold new apps with its `create-app`; follow its page recipes and AppShell / PageHeader / token
+  conventions (see its `skills/` and `docs/`).
+- Earn-its-place: don't promote a component into the kit before it has 2-app reuse; app-local
+  styles stay app-local.
+- **The kit is `@wrightstrategy/ui`** (renamed from `@wright/ui` in June 2026; GitHub Packages requires
+  the npm scope to equal the owning org). How you depend on it is not a preference — it follows from
+  where your app lives:
+  - **Inside the web-ui workspace:** `workspace:*`.
+  - **Editable local dev outside it:** the scaffolder writes a relative `file:` path. This does not
+    exist inside a CI runner or Docker build — swap it before your first CI run.
+  - **Cross-repo / CI / Docker (the real deployment shape):** `"@wrightstrategy/ui": "^1"` from
+    GitHub Packages — it is a **private** package, so see *Consuming private GitHub Packages* below.
+
+
+<a id="consuming-private-github-packages"></a>
+
+## GitHub Packages
+
+`@wrightstrategy/ui` is published **private** to `npm.pkg.github.com` (ADR-003). Any repo moved to
+this posture inherits the same rules — and the same trap.
+
+**A token is necessary but never sufficient.** GitHub Packages requires auth to pull *regardless of
+package visibility* (unlike `ghcr.io`, which serves public images anonymously). Every path below
+needs the committed `.npmrc` scope route — no secret literal, so it is safe to commit:
+
+```ini
+@wrightstrategy:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+```
+
+Beyond that the consumer paths differ — do not assume the Actions recipe covers them:
+
+| Path | Credential | Also needs |
+|---|---|---|
+| **Actions job** | `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` | job `permissions:` with **both** `contents: read` and `packages: read` (job-level `permissions` zeroes every omitted scope, so listing only `packages: read` breaks `actions/checkout`) |
+| **Local dev / Docker** | PAT **(classic)** with `read:packages`, from 1Password | Nothing to declare — there is no workflow permission here. The PAT's **owner** must also have read access to the package; the scope alone still 403s. Fine-grained PATs are **not** accepted by this registry, despite the org's general preference for newer token types. Docker mounts it as a BuildKit secret, never a build-arg |
+| **Renovate** | `PACKAGES_READ_TOKEN`, managed in Mend Renovate Cloud | The shared preset's `hostRules` entry for `npm.pkg.github.com`; repositories must not duplicate this in local `renovate.json` |
+
+**And in every case, for a private package:**
+- **The package must grant the consuming repo Read** — package settings → ***Manage Actions access*** →
+   *Add Repository* → Read. **This step is UI-only: there is no REST API for it** (every endpoint
+   404s), so it cannot be scripted or included in a rollout PR. It is the step people forget, and
+   its symptom is a `403` on a job whose config looks perfectly correct.
+
+   > **The trap:** that settings page has **two visually identical sections**, each with its own
+   > green *Add Repository* button — **Manage Actions access** and **Manage Codespaces access**.
+   > CI needs **Actions**. Filling in Codespaces looks completely correct and changes nothing; the
+   > 403 persists with no hint that you granted the wrong thing. We lost time to exactly this.
+   > A third section, *Manage access* → "Inherit access from source repository", governs **user and
+   > team** access — it is unrelated to Actions, and toggling it does not fix a 403. Leave it on.
+
+**Publishing a repo's package private is therefore a two-actor operation**: the automation can
+delete/republish, but a human must add the grants, and consumers are **down between those two
+moments**. Sequence deliberately, and grant *before* announcing the change is complete.
+
+**Do not edit anything inside the package directory in the same change that republishes it.**
+`README.md` ships in the npm tarball *regardless of the `files` allowlist*, so touching it changes
+the tarball's integrity hash — and every consumer's `bun.lock` pins that hash plus a
+content-addressed download URL. A changed hash breaks `bun install --frozen-lockfile` everywhere at
+once. `bun pm pack` is byte-deterministic, so a same-source republish reproduces the artifact
+exactly; verify it rather than assume:
+```bash
+bun pm pack --destination /tmp/v && \
+  echo "sha512-$(openssl dgst -sha512 -binary /tmp/v/*.tgz | openssl base64 -A)"
+# must equal the sha512 consumers already pin in bun.lock
+```
+If it does **not** match, that is a stop signal — roll back or bump the version. Never regenerate
+consumer lockfiles under an unchanged version: one version naming two artifacts produces
+cache-dependent builds. `web-ui`'s `publish-ui.yml` enforces this with a required
+`expect_integrity` dispatch input; copy that pattern rather than trusting an operator to check.
+
+**Public→private is one-way.** A public GitHub Packages package cannot be made private — visibility
+is **per-package, not per-version** — so the only path is delete + republish, and **deletion removes
+every version at once**.
+
+Before planning on it, inventory what you must restore:
+- **Deletion is refused if _any_ version exceeds 5,000 downloads**, and the REST API exposes no
+  download count. Confirm the Delete control is actually present in package settings first; its
+  absence is the only reliable signal.
+- **Republish every version consumers still resolve, not just the newest.** `@wrightstrategy/ui` had
+  exactly one version, which made this trivial; that is not the general case. A package with history
+  needs each still-referenced version re-published, and each one's integrity re-verified against what
+  its consumers pin. If you cannot reproduce them all, do not delete.
+
+
+## Knowledge graph (graphify)
+Repos that use **graphify** (`safishamsi/graphify`, CLI `graphify`) build a knowledge graph
+at `graphify-out/`. Adoption is **explicit**: a repo is a graphify adopter when it is flagged
+`graphify = true` in `registry.toml` (the audit delivers the graphify payload only to marked
+repos). `graphify-out/` is a **`main`-owned** artifact — the model and its rationale are
+ADR-013 (`docs/adr/013-own-graphify-out-on-main-via-a-post-merge-regen-job-prs-never-modify-it.md`).
+The PR-side graph-**staleness** gate is retired (a branch's committed graph is expected to trail
+`main`, so it no longer fails PRs). The generated adopter payload completes ADR-013 Phase 2: a
+post-merge job installs the fleet-pinned `graphifyy[sql]` distribution, regenerates and commits
+`graphify-out/` on `main` (AST-only, free), while required PR CI rejects any diff under
+`graphify-out/**`. The SQL extra is part of the canonical runtime contract: without it graphify
+classifies SQL but cannot produce the AST hashes required by the manifest integrity gate. The
+workflow uses the org bot App's ruleset bypass and is delivered only after a repo is deliberately
+marked and its protection is ready.
+
+Phase 2 canonical activation is complete: the guidance workflow checks out the PR merge result plus
+its base parent (`fetch-depth: 2`) and the pinned checker enforces that adopter PRs do not modify
+`graphify-out/**`. Existing adopters receive that canonical workflow on the next central audit
+fan-out. For a new adopter with an existing committed graph, land the adopter payload before setting
+`graphify = true`; this is an explicit migration and may need an owner-run `--graphify-payload` PR
+because central bootstrap cannot select an unmarked repo. Merging that payload triggers the
+protected-main refresh, which performs any tracked-artifact cleanup outside the PR. A repository
+with no committed graph uses the canonical audit path: establish the ruleset/bypass and confirm the org
+Actions secret `BOT_APP_PRIVATE_KEY` covers the repo, merge `graphify = true`, then merge the
+generated payload PR. Consumer CI cannot read the central marker and still treats that payload PR
+as unadopted; merging it triggers the first main-side refresh, which creates and validates the
+initial **structural/AST-only** graph before the bot commits it.
+Standardize the committed set the same way in every repo:
+
+- **`.gitignore` — commit the map, drop local-only state.** `graphify-out/` is meant to be
+  committed so teammates and agents start from the same map. The generated payload appends an
+  explicit allowlist for the five committed artifacts before excluding the per-run API cost,
+  semantic-extraction cache, and browser view. That allowlist deliberately overrides an older
+  whole-directory `graphify-out/` ignore; without it a zero-graph refresh can generate valid files
+  and then silently see nothing to commit. The workflow and central checker fail loud if any
+  committed artifact is still ignored.
+  ```
+  # abbreviated — repo-bootstrap generates the complete ordered block
+  !/graphify-out/
+  /graphify-out/*
+  !/graphify-out/graph.json
+  !/graphify-out/manifest.json
+  /graphify-out/cost.json
+  /graphify-out/cache/
+  /graphify-out/graph.html
+  ```
+  Do not remove a previously committed path in a PR: the generated protected-main refresh removes
+  every tracked path outside the canonical five-file set after the payload merges. This keeps the
+  cleanup inside the same privileged ownership boundary as regeneration.
+
+- **`.graphifyignore` — merged with `.gitignore`, scopes what gets indexed.** Uses gitignore syntax
+  (including `!` negation). Since graphify **0.8.43** (`safishamsi/graphify` #1363, a security fix)
+  the two files are **merged**, not either-or: `.gitignore` is evaluated first and `.graphifyignore`
+  last, and `.graphifyignore` **can only ever exclude more — it never re-includes** a path
+  `.gitignore` already dropped. So it holds the graphify-specific *extras* to skip on top of
+  `.gitignore`; you do **not** restate everything. (Older guidance said adding one makes it "take
+  over" so it "must list everything" — that was true before 0.8.43 and is now wrong; see
+  `docs/design-notes/graphify-best-practices-research.md`.) Index real source + the markdown
+  design/architecture docs corpus (specs, living/reference runbooks, the ADR *index*); exclude,
+  on top of `.gitignore`:
+  - vendored/generated noise — `venv/`, `node_modules/`, build output, collected static, `media/`
+  - graphify's own output — `graphify-out/`
+  - dead/legacy code that's been superseded
+  - stale point-in-time notes (session logs) — they contradict later decisions and poison the graph
+  - decided ADR bodies — `docs/adr/[0-9][0-9][0-9]-*.md` (the journal; keep `docs/adr/README.md`)
+  - binary assets graphify can't parse — `*.png`/`*.jpg`/`*.svg`/`*.pdf`/`*.xlsx`/`*.docx`/…
+
+- **Keeping it current is the post-merge job's role, not a per-PR step.** Under the `main`-owned
+  model you do **not** regenerate and commit `graphify-out/` on a branch to satisfy a gate — that
+  freshness is owned on `main` (ADR-013). A PR should leave the inherited `graphify-out/` untouched.
+  When you want a **branch-current** view locally, run `graphify update .` (AST-only, free) to
+  refresh your working copy, query it, and leave it **uncommitted** — do not include it in the PR.
+  A generated `.githooks/pre-commit` guard provides an earlier local warning when the clone has
+  `core.hooksPath=.githooks`; that Git config is clone-local and cannot be activated by merging the
+  hook. Required PR CI is therefore always the enforcement of record. The post-merge job validates
+  `graph.json` as a node-link graph and applies the same manifest integrity contract as PR CI: the
+  manifest must be an object keyed by safe corpus paths, every value must be an object, and every
+  `ast_hash` must be 32 lowercase hexadecimal characters. Validation happens before staging or
+  pushing, then the job converges after the last source merge. The job sets
+  `GRAPHIFY_NO_BACKUP=1` because Git history already preserves
+  every prior graph; otherwise graphify snapshots a curated graph into a dated
+  `graphify-out/YYYY-MM-DD/` directory before overwriting it. The privileged main-side job also
+  removes any already-tracked graphify path outside the canonical five-file set, which is the only
+  cleanup path consistent with the invariant that PRs never modify `graphify-out/**`. graphify
+  refuses to overwrite a committed graph when the regenerated graph has fewer nodes. In the clean,
+  stateless post-merge checkout, the workflow retries any failed ordinary refresh once with
+  `--force`; graphify's failure text is not a stable interface, while `--force` accepts a shrink
+  without bypassing corrupt-graph guards. A failed retry remains fatal. Every accepted reduction
+  emits an Actions warning, writes the old and new counts to the job summary, and includes the node
+  delta in the graph commit subject. If a refresh is wedged, run **Graphify graph refresh** from the
+  Actions UI with the boolean `force` input enabled. That recovery still reports any node reduction
+  and does not change ADR-013 ownership: PRs must continue to leave `graphify-out/**` untouched.
