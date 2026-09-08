@@ -49,7 +49,7 @@ There sample ini file is fully documented. In an effort to reduce load on the MQ
 
 3. Clone the repository:
 ```
-git clone https://github.com/rv10guy/gps2mqtt.git
+git clone https://github.com/wrightstrategy/gps2mqtt.git
 ```
 
 4. Change to the `gps2mqtt` directory:
