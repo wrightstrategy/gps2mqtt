@@ -2,5 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>wrightstrategy/bridge//renovate-config/default.json"
+    "config:recommended"
   ]
 }
