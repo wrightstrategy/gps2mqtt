@@ -1,70 +1,70 @@
 <!-- ws:dev begin — generated; do not hand-edit -->
-<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=1d090e9ce3487a30d646d17501de22122475060d051c23d418feee09aa2eeea1 -->
+<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=c2147c827077531164a708db761306f50689047725d48254b635a07e7b246bb8 -->
 # Coding Universe
 
-Shared conventions for Wright Strategy development repositories. This resident block is
-**defaults and tripwires only** (ADR-028). Reference payload:
-`docs/agents/ws-dev-reference.md`. Workflow policy lives in the skill that owns the workflow.
+Shared Wright Strategy rules: **Binding** boundaries cannot be weakened locally;
+**Default** choices apply unless replaced in root `AGENTS.md` → `Local departures`.
+Record the default, scope, replacement, and reason outside generated blocks. Definitions
+and format: `docs/agents/ws-dev-reference.md#standard-authority-and-local-departures`.
+Workflow policy stays in its owning skill; local departures never waive gates or checks.
 
-## Standing defaults
+<a id="standing-defaults"></a>
 
-- **Mindset:** GitOps — git is the source of truth; declarative over manual.
-- **Communication:** write for the operator, who has not loaded your skills or vocabulary.
-  Lead with what changed and what you need from them; a term of art appears only beside its
-  plain meaning. If a report needs "now in English, what did you do?", it failed.
-- **Ordinary tier (ADR-026):** write implementation yourself, in-session; a different
-  model family reviews it before the human merge gate. Parallelism or isolation, when a task
-  earns it, runs on Orca orchestration inside a ready runtime — never a hidden host subagent
-  or a silent executor CLI. Workers never dispatch onward and are released before teardown.
-  ADRs, specs, and plans you always write yourself.
-- **Review gates:** no implementation PR meets the human gate without `ws-dev:pr-review`;
-  no finished spec or plan without `ws-dev:doc-review`. One exemption: **Tiny** work
-  (trivial, behavior-preserving — CI is the check) may skip the agent review; when in
-  doubt it is not Tiny. Every departure exists only on the gate record — a silent skip is
-  never a waiver. Gate policy, waiver classes, and declared post-verdict deltas live in those
-  skills.
-- **Work management (ADR-029):** org work lives in Linear (`ws-dev:linear`) — planned work files
-  complete into Backlog; only bugs get priority. Blocked until it lands? file to Todo +
-  `agent-waiting`, saying what is blocked. A mid-task **discovery is a hypothesis, not work**:
-  file it to **Triage** with the discovery template + your exponential estimate; the nightly
-  pass adjudicates — never promote your own finding to Backlog
-  (`docs/standards/work-management.md#agent-discovery-triage`). Route by the repository's
-  `linear_team`; multi-repo teams require its `repo:` label. Repos with
-  `change_control = "platform"` use **PLT** and `ws-dev:repo-request`. Never a GitHub issue — GitHub keeps code, PRs, CI; link
-  PRs to their Linear issue so state syncs on merge.
-- **Secrets:** never in git — commit `.env.example`, keep values in 1Password / SOPS / GitHub
-  Environments. Apps fail fast on missing config; prefer OIDC or short-lived tokens.
-- **Python:** always `uv`, never pip; commit `uv.lock`; never commit `.venv/`.
-- **TypeScript:** Bun, never Node, for agent and scripting code; commit `bun.lock`;
-  `"strict": true`.
-- **Commits:** Conventional Commits, imperative subject <70 chars, body says *why*. Agent
-  commits carry `Authored-By: Claude|Codex|Grok` (reconciliation: `Reconciled-By:`);
-  `Co-Authored-By:` only for an agent that wrote shipped bytes.
-- **Deploy steps:** what a change needs outside the image (env var, migration, job, cutover
-  order, out-of-app step) is an entry in `deploy/deploy_next.md` in the same PR, edited in
-  place when a later change supersedes it — never a commit trailer, which cannot be
-  corrected once written.
-- **Testing:** `bun test` / `pytest`; test names describe behavior; real dependencies over
-  mocks that can drift.
-- **CI runners:** private-repo CI defaults to `runs-on: [self-hosted, ci]` (fresh isolated
-  VM, no LAN route); GitHub-hosted is a documented exception.
-- **Runtime:** one foreground process, stdout/stderr logs, clean `SIGTERM`; HTTP services
-  expose `/healthz` and `/readyz`; migrations are explicit, idempotent deploy steps.
-- **Docs:** living docs are the only authority and update with implementation; a decision
-  lands as a living-doc edit plus a dated `docs/decisions.md` entry in the same PR (ADRs are
-  a frozen archive — never write or supersede one). Before finishing: `ws-dev:doc-audit`, or
-  state `docs not needed: <reason>`.
-- **Releases:** Python: python-semantic-release, tag-only, dispatched; JS/TS: Changesets;
-  release-please is deprecated. Notes let a deployer bump a pin without reading source:
-  the filed deploy entries lead, then breaking changes and the image index digest.
-- **Platform repos (ADR-029):** from outside the platform stream never write `bridge`, `homelab`,
-  `dotfiles`, or the homelab cluster — no clone, PR, `kubectl`, SSH; file PLT. Inside it, write
-  all three.
-- **Instruction files:** `AGENTS.md` is each repo's canonical guidance; `CLAUDE.md` is the
-  one-line `@AGENTS.md` stub. Repo-specific guidance stays outside the generated block;
-  scaffold with `repo-bootstrap`.
+## Standing rules
+
+- **Default — Mindset:** GitOps — git is the source of truth; declarative over manual.
+- **Default — Communication:** write for the operator. Lead with what changed and what you
+  need from them; explain terms beside their plain meaning.
+- **Default — Ordinary work:** write implementation yourself, in-session.
+- **Binding — Agent roles:** primary authors write plans/specs; earned parallelism or isolation
+  uses Orca orchestration in a ready runtime, never hidden host subagents or silent executor
+  CLIs. Workers never dispatch onward and are released before teardown. Shipped work meets
+  the owning review gate however it was produced.
+- **Binding — Review gates:** use `ws-dev:pr-review` for implementation PRs and
+  `ws-dev:doc-review` for finished specs/plans before the human gate. Tiny work
+  (trivial, behavior-preserving) and other exceptions use only the owning skill's recorded
+  paths. Every departure belongs on the gate record; a silent skip is never a waiver.
+- **Binding — Work management:** before filing development work, use `ws-dev:linear` and
+  its canonical `docs/standards/work-management.md` filing contract in bridge. Platform
+  requests use `ws-dev:repo-request`. Track agent work in Linear, never GitHub issues;
+  link PRs to Linear.
+- **Binding — Secrets:** never in git.
+- **Default — Configuration:** commit `.env.example`; keep values in 1Password / SOPS /
+  GitHub Environments. Fail fast on missing config; prefer OIDC or short-lived tokens,
+  subject to applicable security/authentication contracts.
+- **Default — Python:** use `uv`, not pip; commit `uv.lock`; never commit `.venv/`.
+- **Default — TypeScript:** Bun for agent/scripting code; commit `bun.lock`; `"strict": true`.
+- **Default — Commits:** Conventional Commits, imperative subject <70 chars; body says why.
+- **Binding — Attribution:** agent commits carry truthful `Authored-By: Claude|Codex|Grok`
+  (reconciliation: `Reconciled-By:`); `Co-Authored-By:` only for authors of shipped bytes.
+- **Binding — Deploy steps:** record required external actions (env, migration, job, cutover,
+  out-of-app step) in `deploy/deploy_next.md` in the same PR; edit superseded entries in place.
+  Follow the reference's existing migration scope for repos still on `Deploy:` trailers.
+- **Default — Testing:** `bun test` / `pytest`; behavioral test names; real dependencies over
+  mocks that can drift. Required checks and verification obligations remain in force.
+- **Default — CI runners:** private CI uses `runs-on: [self-hosted, ci]` (fresh VM, no LAN);
+  document GitHub-hosted exceptions. Generated workflows remain generator-owned.
+- **Default — Runtime:** one foreground process, stdout/stderr logs, clean `SIGTERM`;
+  HTTP `/healthz` + `/readyz`; explicit, idempotent migrations. Preserve actual consumer contracts.
+- **Binding — Docs:** reconcile living/reference docs with changes. Decisions land in their
+  living home plus dated `docs/decisions.md` entries; ADRs are frozen (never extend or supersede).
+  Finish with `ws-dev:doc-audit` or `docs not needed: <reason>`.
+- **Default — Releases:** Python: python-semantic-release, tag-only, dispatched; JS/TS:
+  Changesets. release-please is deprecated; migrate when release tooling is touched.
+- **Binding — Release information:** accurate deployment changes, breaking changes and image
+  index digest let a deployer bump a pin without reading source. Preserve published interfaces.
+- **Binding — Platform:** outside the platform stream never write `bridge`, `homelab`,
+  `dotfiles`, or the cluster (no clone, PR, `kubectl`, SSH); file PLT. Inside it, write all three
+  under the target repo's own gates. Existing owner-authorized exceptions retain their scope.
+- **Binding — Instruction files:** `AGENTS.md` is canonical; `CLAUDE.md` is the one-line
+  `@AGENTS.md` adapter. Generated content changes at its source, via `repo-bootstrap`.
+- **Default — Local guidance:** smallest useful layout outside generated blocks.
+- **Binding — Graphify:** for adopters, PRs never change `graphify-out/`; regeneration and
+  committed cleanup belong to the existing main-side job.
 
 ## Tripwires
+
+Read the applicable source; its rule labels govern. These pointers add no waiver path.
 
 | Before you… | Read |
 |---|---|
