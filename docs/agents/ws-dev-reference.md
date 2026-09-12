@@ -1,7 +1,9 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=586aaf4adc8f6cdbd641486fab3732c0916022cd704cf101c5bf365ebc9cbea3 -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=e0afdaa533b884ecba9dbc10e2014ce4e64971b19303615b51498b25eaa309db -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
+
+**Authority: Binding.**
 
 This document is the **generated/delivered reference payload** for Wright Strategy development
 conventions (ADR-016). It is **not** always-resident context: agents and humans **read it on
@@ -11,9 +13,55 @@ as the `ws:dev` block, and delivered here as `docs/agents/ws-dev-reference.md`) 
 Content below was relocated from the former monolithic `conventions/dev.md`. Prefer the anchors
 linked from resident tripwires.
 
+## Standard authority and local departures
+
+**Authority: Binding.**
+
+**Binding** rules cannot be weakened locally; their existing exceptions stay in their owning
+policy. **Default** choices apply unless a visible local departure replaces them. A section's
+Authority label governs normative prose until the next same-or-higher heading; a labeled
+subsection or clause overrides it only within that scope. Examples add no obligations and
+MAY/SHOULD remain options/recommendations. Unclassified text retains existing applicability;
+never assume unmarked means Default. This does not alter host instructions or user authority.
+
+Use one optional `## Local departures` section in root `AGENTS.md`, outside generated blocks.
+Each entry names the Default, scope, replacement and reason, with a canonical source link:
+
+```markdown
+## Local departures
+
+- **Default:** [Testing](https://github.com/wrightstrategy/bridge/blob/main/conventions/dev.md#standing-rules), Testing clause.
+  **Scope:** Existing Python hook/wiring checks.
+  **Replacement:** Keep unittest and standalone runners; the doc-audit package keeps pytest.
+  **Reason:** Preserve working stdlib tests without a framework-only migration.
+```
+
+Index subtree departures here with their scope and optional nested-guidance link. No section
+is needed when there are none. Use the normal repo PR process; Default replacements require
+no extra platform approval or issue. Proposed departures remain proposals for human review,
+not a new governing frame. Existing valid exceptions can migrate when touched.
+
+Preserve Binding obligations, required checks and actual consumer interfaces. Changing a
+Default does not permit hand-editing generated payloads, bypassing a review gate, or breaking
+a deployment that relies on the original behavior. Align repo-owned scripts/configuration/docs
+when behavior changes; generator changes follow their existing platform ownership path.
+
+The freshness audit displays these declarations and source locations, including current and
+existing-update outcomes, without changing freshness or check results. New sync PR bodies
+include them. Primary agents include applicable committed and proposed departures in review
+evidence. Reviewers cite Binding rules as Binding and assess Default replacements on their
+merits; a displaced preference alone cannot block them. The semantic doc-audit verifies the
+claims against behavior. Full authority:
+[bridge's standard authority](https://github.com/wrightstrategy/bridge/blob/main/docs/standards/standard-authority.md).
+
 ## Parallel and isolated work
 
-Ordinary work is written in-session by the agent holding the conversation. When a task
+**Authority: Binding.**
+
+**Default — Ordinary work:** implementation is written in-session by the agent holding the
+conversation.
+
+**Binding — Orchestration and roles:** plans/specs remain primary-authored. When a task
 genuinely earns parallelism or isolation — independent slices that can run concurrently, a
 long batch, or work that must not touch the session checkout — run it through **Orca
 orchestration** inside a ready runtime (`orca status --json`): visible `worker-start` /
@@ -24,6 +72,8 @@ However the bytes were produced, they meet the same cross-family review gate
 (`ws-dev:pr-review`) before the human merge gate.
 
 ### Worker release before teardown
+
+**Authority: Binding.**
 
 The installed, version-matched Orca orchestration skill (`orca skills get orchestration`) and
 command help are authoritative for lifecycle command spellings. After every accepted
@@ -63,6 +113,8 @@ for after merge.
 
 ## Orca worktree checkpoints
 
+**Authority: Default.**
+
 The installed, version-matched Orca CLI (`orca skills get orca-cli` and
 `orca worktree --help`) is authoritative for command and status spellings; the examples below
 show the supported surface when this convention was recorded.
@@ -97,6 +149,8 @@ blocked and on whom. Orca metadata updates are best-effort and never block the w
 
 ## Repository documentation — full narrative
 
+**Authority: Binding.**
+
 **Every repository must document the system it owns.** At minimum, its `README.md` explains the
 repository's purpose, setup, and primary usage, and its `AGENTS.md` maps agents to the current
 sources of truth. When behavior, interfaces, configuration, architecture, schemas, or operations
@@ -119,6 +173,8 @@ This is a local agent responsibility, not a documentation-specific CI or credent
 
 ## Work management — leaving the graph honest
 
+**Authority: Binding.**
+
 Work filing and planning live in **Linear** (ADR-029; rulebook:
 `wrightstrategy/bridge` → `docs/standards/work-management.md`). There is no planning agent:
 under One Front Door the plan is *authored* at a planning session, not inferred from metadata,
@@ -137,16 +193,19 @@ or horizon.
 
 
 ## GitHub Actions
+
+**Authority: Binding.**
+
 - Pin every third-party Action and reusable workflow by **full commit SHA**. Keep the human
   version in a comment if helpful (for example, `# docker/build-push-action v7.2.0`) and let
   Dependabot/Renovate raise update PRs.
 - Set `permissions: { contents: read }` at workflow or job scope, then grant only the extra
   scopes a job needs (`packages: write`, `id-token: write`, `attestations: write`, etc.).
-- Prefer OIDC or GitHub App tokens over long-lived cloud/registry credentials. Never pass
-  secrets through Docker build args; use BuildKit secret mounts.
+- **Default — Credential choice:** prefer OIDC or GitHub App tokens over long-lived credentials.
+- **Binding — Build secrets:** never pass secrets through Docker build args; use secret mounts.
 - Treat `pull_request_target` as privileged: do not check out or execute untrusted PR code in
   that context.
-- **Node runtime deprecations bite recurringly.** GitHub periodically forces JS actions onto a
+- **Default — Node runtime maintenance:** GitHub periodically forces JS actions onto a
   newer Node major (e.g. Node 20 → 24, forced 2026-06-16) and emits deprecation warnings before.
   Get ahead of it: keep Renovate raising action-bump PRs, and to validate/opt-in early set
   `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` (or the then-current equivalent) as a workflow-level
@@ -157,6 +216,8 @@ or horizon.
   also trigger downstream workflows (unlike the default `GITHUB_TOKEN`).
 
 ### Concurrency and merge queues
+
+**Authority: Binding.**
 
 A concurrency group still runs at most one job or workflow at a time. How many runs may *wait*
 behind that one is configurable with `queue`:
@@ -234,16 +295,23 @@ above is unique too). Do not key the group only with `github.event.pull_request.
 is empty for `merge_group`, collapsing every queue entry into one shared group.
 
 ### Repository settings
-- **Delete head branch on merge is on** for every org repo (`delete_branch_on_merge: true`).
+
+**Authority: Binding.**
+
+- **Default — Branch cleanup:** delete head branch on merge is on for every org repo (`delete_branch_on_merge: true`).
   Merged PR branches must not accumulate. `repo-create` enables it on every new repo; existing
   repos must match. Toggle: `gh repo edit <owner>/<repo> --delete-branch-on-merge`.
 - **Human repository access** follows the repository access standard
   (`wrightstrategy/bridge` → `docs/standards/repository-access.md`): any repo that ships a
   marketplace-distributed plugin must be readable by every human in `roster.toml`; other private
-  repos stay invite-only (`default_repository_permission: none` is load-bearing). Agents propose
+  repos default to invite-only (the org-wide `default_repository_permission: none` remains
+  binding). Agents propose
   grants; owners apply them.
 
 ### Actions static analysis (zizmor)
+
+**Authority: Binding.**
+
 - Every registered **private** app repo runs **zizmor** on `.github/workflows/` (generated
   workflow + policy via repo-bootstrap `--payloads` / the central audit fan-out).
 - Policy encodes the first-party moving-ref rule (same as prose above):
@@ -257,6 +325,9 @@ is empty for `merge_group`, collapsing every queue entry into one shared group.
   so pin/checksum bumps in the generator fan out (bridge#262).
 
 ### Runner placement & the minute budget
+
+**Authority: Default.**
+
 GitHub-hosted minutes are a **fixed monthly budget** (the org allowance, currently 3,000 Linux
 min), not a free resource — and GitHub **bills every job rounded up to a whole minute**, so many
 short, parallel, or scheduled jobs add up far faster than wall-clock suggests. **Self-hosted
@@ -269,7 +340,7 @@ runners are unlimited and free.** Spend the budget deliberately.
   `apt-get`, Docker actions, and `services:` work exactly as on `ubuntu-latest`; do not add
   runner-specific workarounds or maintain a custom CI image. The shared release workflow
   already selects the CI pool.
-- **Deployment runners:** jobs that must reach the homelab LAN or QuiltShowcase over WireGuard
+- **Binding — Deployment runners:** jobs that must reach the homelab LAN or QuiltShowcase over WireGuard
   use the `Homelab-deploy` runner group plus the appropriate label (`homelab` or
   `quiltshowcase`). Do not target a deployment runner by label alone — an unrelated runner can
   share that label. Never store deploy credentials in the VM image or runner configuration;
@@ -277,13 +348,13 @@ runners are unlimited and free.** Spend the budget deliberately.
 - **GitHub-hosted is the explicit exception:** untrusted/fork PR code from public repositories,
   the organization-wide agent workflow, external deadman monitoring that must survive Nimitz
   failure, and operating-system matrices that require GitHub macOS/Windows images. Document the
-  reason beside every remaining `ubuntu-*`, `macos-*`, or `windows-*` assignment. Public
-  repositories are intentionally denied access to the `Homelab-runners` group.
-- **Runner implementation belongs to homelab:** the Nimitz VM definitions, network isolation,
+  reason beside every remaining `ubuntu-*`, `macos-*`, or `windows-*` assignment.
+- **Binding — Public isolation:** public repositories must not use the `Homelab-runners` group.
+- **Binding — Runner ownership:** the Nimitz VM definitions, network isolation,
   registration-token minter, lifecycle service, monitoring, and operations runbook live in
   `wrightstrategy/homelab`. Application repos select a trust tier; they do not manage runner hosts.
-- **Path-gate expensive jobs** (image builds, e2e) so app-only changes skip them — but **never**
-  path-gate a *required* status check: a skipped required check hangs the PR at "Expected". Gate
+- **Default — Cost control:** path-gate expensive non-required jobs (image builds, e2e).
+- **Binding — Required checks:** never path-gate a required status check: a skipped required check hangs the PR at "Expected". Gate
   the job with a computed `needs.<detector>.outputs` condition instead of a top-level `paths:`
   filter when the workflow also hosts a required check.
 - **Scheduled workflows** run on self-hosted, at the cadence actually needed (a liveness probe
@@ -306,6 +377,8 @@ runners are unlimited and free.** Spend the budget deliberately.
 
 ## Versioning & releases
 
+**Authority: Default.**
+
 **Standard by language.** Python repos release with **python-semantic-release** in tag-only mode,
 run from a dispatched workflow. JS/TS repos release with **Changesets**. **release-please is
 deprecated:** no new adoption; a repo still on it migrates the next time its release tooling is
@@ -314,16 +387,18 @@ touched. Known remaining consumers are bridge's own path-scoped `ci/` driver and
 `wrightstrategy/quiltshowcase` `docs/project/release-operating-model-spec.md` (decisions D8, D14,
 D20, D21); QuiltShowcase piloted the model before it became the convention.
 
-**Common to every tool:**
-- The version lives in **one** place (`pyproject.toml` / `package.json`) and code reads it
+Common to every tool, with each obligation labeled:
+- **Default — Version source:** the version lives in one place (`pyproject.toml` / `package.json`) and code reads it
   dynamically — `importlib.metadata.version(...)` in Python, an import from `package.json` in
   JS/TS — never a hardcoded version literal in source or tests, or the first bump breaks the build.
-- Nothing tags by hand. The release workflow is the only thing that creates a `v*` tag; a
+- **Binding — Release tags:** nothing tags by hand. The release workflow is the only thing that creates a `v*` tag; a
   hand-pushed tag bypasses the notes, the digest append, and the readiness check.
-- The image lane is unchanged: `container-build` release mode resolves the `sha-<full>` digest the
+- **Binding — Image identity:** the image lane is unchanged: `container-build` release mode resolves the `sha-<full>` digest the
   branch build already pushed for the tagged commit and promotes `:X.Y.Z` / `:X.Y`. Build once, retag.
 
 ### Python: python-semantic-release, tag-only, from a dispatched workflow
+
+**Authority: Default.**
 
 - **Why this shape.** Tag-only mode tags a commit the branch already built and validated, so
   build-once-retag needs no release commit. There is no release PR, so no CI round per refresh
@@ -339,7 +414,7 @@ D20, D21); QuiltShowcase piloted the model before it became the convention.
   computes the version from Conventional Commits since the last tag in the branch's history, tags the
   branch tip without adding a commit, pushes the tag, and creates the GitHub Release with generated
   notes. The existing release lane then runs unchanged.
-- **Constraints.** Pin python-semantic-release by exact version in the workflow (for example
+- **Binding — Constraints when using this release lane:** pin python-semantic-release by exact version in the workflow (for example
   `uvx python-semantic-release==X.Y.Z`); a floating version is a supply-chain and behavior drift.
   Push the tag with the org bot **App token**, never `GITHUB_TOKEN`: a tag pushed with the default
   token does not trigger the downstream release workflow (the OPS-1 lesson).
@@ -370,11 +445,15 @@ D20, D21); QuiltShowcase piloted the model before it became the convention.
 
 ### JS/TS: Changesets
 
+**Authority: Default.**
+
 - Each PR that changes published behavior adds a changeset file; the Changesets action maintains the
   version PR and, on merge, tags and publishes. The version lives in `package.json` only, read
   dynamically. The release lane (build once on `main`, retag on `v*`) is the same as for Python.
 
 ### Maintenance-branch lane: `release/X.Y`
+
+**Authority: Default.**
 
 - **Create lazily, from the production pin.** `release/X.Y` exists only when production needs a fix
   before the next minor. Read what production runs (the deployed image pin names the version and
@@ -397,9 +476,9 @@ D20, D21); QuiltShowcase piloted the model before it became the convention.
   exempt from required checks so a branch can be created from a tag; add `release/**` to any push
   triggers that gate `main` (migration-leaf, zizmor); and make the repo's readiness check accept a
   build from `main` **or** from the `release/*` branch that contains the tagged commit.
-- **Stop promoting `:latest`** once a repo can have two release lines: it can move backward, and
+- **Binding — Consumer pins:** stop promoting `:latest` once a repo can have two release lines: it can move backward, and
   nothing should consume it — consumers pin a digest.
-- **Rollback** pins an older released tag and digest. It never uses a branch; images and tags are
+- **Binding — Rollback identity:** pin an older released tag and digest. It never uses a branch; images and tags are
   permanent. **Cleanup:** a `release/X.Y` older than the production pin is flagged for a human
   (planning brief), never auto-deleted; deletion loses nothing because the tags keep every commit.
 - Repo-local procedures live in QuiltShowcase's `release-ops` skill (`cut` with dry run first,
@@ -408,6 +487,8 @@ D20, D21); QuiltShowcase piloted the model before it became the convention.
 
 
 ## Deploy steps
+
+**Authority: Binding.**
 
 **The record is a file, not commit history.** Anything a change needs outside the image — a new,
 renamed, or removed environment variable; a migration that needs ordering or a hand step; a
@@ -426,6 +507,8 @@ including repos far smaller than the one that found it.
 
 ### Writing an entry
 
+**Authority: Binding.**
+
 - **Read the pending entries before adding one.** If your change alters or cancels an entry already
   there, **edit that entry in place** and say what changed. Never leave two entries that disagree —
   that is the exact failure this convention exists to prevent.
@@ -433,8 +516,8 @@ including repos far smaller than the one that found it.
   tier — migrations, schedule sync, health-check provisioning — needs no entry. An entry is for
   what a person or a separate system must do.
 - **Names, never values.** Keys, hostnames, and command names belong in an entry; secrets and
-  per-tier values do not (resident **Secrets** default).
-- Entry shape — QuiltShowcase's, and a good default:
+  per-tier values do not (resident **Binding — Secrets**).
+- **Default — Entry shape:** QuiltShowcase's example:
 
   ```
   ## Short title (ISSUE-nnn, PR #nnn)
@@ -447,6 +530,8 @@ including repos far smaller than the one that found it.
 
 ### Making it stick: gate on the paths that imply a step
 
+**Authority: Default.**
+
 Documentation does not enforce this; CI does. Name the handful of paths in your repo that almost
 always imply an out-of-app step — the env-var example file, the webhook handler table, the feature
 switch registry, the container entrypoint — and fail a PR that touches one of them without touching
@@ -457,6 +542,8 @@ enough that no path predicts them does not need the gate; it still keeps the fil
 The authoring side needs no skill: the entry shape above plus this gate is the whole rule.
 
 ### Rotation: file on the release, never on completion
+
+**Authority: Binding.**
 
 The pending file rotates when the code **ships**, not when its steps are finished.
 
@@ -471,19 +558,25 @@ not done on production, so staging finishing a step would rename the file out fr
 production promotion that still needs to read it. And a file named for its completion has no
 orderable identity, so nothing can compute which files a promotion still has to cross.
 
-**Completion is state inside the file**, written after the fact as `Done: <tier> <date> (<who>)` on
-the entry. A filed version file is otherwise edited only to strike an entry that a later version
-withdrew, naming that version. Rollback reads the files backwards.
+**Default — Completion notation:** record completion inside the file as
+`Done: <tier> <date> (<who>)` on the entry.
+
+**Binding — Filed record integrity:** a filed version file is otherwise edited only to strike
+an entry that a later version withdrew, naming that version. Rollback reads the files backwards.
 
 ### What scales with tiers, and what does not
 
-Only **the file, the entry shape, and edit-in-place** are the org default. Versioned files at the
+**Authority: Binding.**
+
+The file and edit-in-place are Binding; the entry shape is Default. Versioned files at the
 cut, `Done:` marks, and the cross-version promotion read are machinery for *promotion*: they earn
 their place when a repo has more than one tier or a release cut, and not before. A single-tier repo
 with neither keeps one `deploy/deploy_next.md`, rotates it on deploy, and stops there. Do not
 install a promotion model in a repo that has nothing to promote.
 
 ### Release notes
+
+**Authority: Binding.**
 
 - **Release notes lead with a "Deployment changes" section built from the entries filed at the
   cut**, then changes grouped by type and scope, and the release lane appends the image index digest
@@ -493,48 +586,60 @@ install a promotion model in a repo that has nothing to promote.
   renders the same section by whatever means it has.
 - The tagged tree still holds the same entries under the pending name, so **a tag alone is a
   complete record** even before the filed copy is read.
-- A promotion check may diff environment **key names** across tiers (next / staging / production)
-  and print the filed entries between the production pin and the candidate. Names only — values
-  never leave their tier. QuiltShowcase's `promote-check` is the worked example.
+- **Default — Promotion diagnostics:** a promotion check may diff environment key names across
+  tiers and print the filed entries between the production pin and candidate. QuiltShowcase's
+  `promote-check` is the worked example.
+- **Binding — Diagnostic secrecy:** names only; values never leave their tier.
 
 ### The executing side stays repo-local
 
+**Authority: Default.**
+
 Reading the files a promotion crosses, running the steps in order, and writing the `Done:` marks is
 a procedure with real branching, and it is skill-shaped — QuiltShowcase carries it as its repo-local
-`release-ops` skill. It is deliberately **not** a `ws-dev:` skill yet: that procedure is the most
-repo-specific part of this convention (image pins, tier names, that repo's own workflows), and
+`release-ops` skill.
+
+**Binding — Shared skill ownership:** it is deliberately not a `ws-dev:` skill yet: that
+procedure is the most repo-specific part of this convention (image pins, tier names, that repo's own workflows), and
 promotion into the shared plugin is gated on a demonstrated second consumer (earn-its-place).
 Revisit when a second repo has built one.
 
 ### Repos still carrying `Deploy:` trailers
 
+**Authority: Binding.**
+
 Nothing here is retroactive and no migration is required. Repos still using the trailer keep
-working; the file is the default for new work. `ci/scripts/homelab-bump.ts` still emits a trailer on
+working under this existing migration exception; the file is required for new work. `ci/scripts/homelab-bump.ts` still emits a trailer on
 the automated homelab pin bump — that is homelab's call to change, not a bridge edit.
 
 ## Container images & CI
+
+**Authority: Binding.**
+
 Registry: `ghcr.io/wrightstrategy/<repo>`. Builds run in GitHub Actions. The cluster is amd64.
 These build/release standards are encoded as **versioned reusable workflows** in
 `wrightstrategy/bridge` (`container-build`, `release`, `osv-scan`, `lockfile-refresh`, and
 `homelab-bump`, introduced in v2.1.0). Their
 canonical sources live under `ci/` and are generated into the root workflow namespace consumed as
-`wrightstrategy/bridge/.github/workflows/<name>.yml@vX`. Consume the shared workflow rather than
-re-implementing it per repo, so a standard change propagates on the next run.
+`wrightstrategy/bridge/.github/workflows/<name>.yml@vX`.
+
+**Default — Workflow choice:** consume the shared workflow rather than re-implementing it per
+repo. Its published interfaces remain Binding when consumed.
+
+**Binding — Automatic pin update contract:**
 The `homelab-bump` workflow automatically commits enrolled image pins after a successful
 stable release. Homelab owns its target mapping and activation policy; app callers supply
 the release tag and App configuration. Its contract is `wrightstrategy/bridge` →
 `ci/docs/homelab-bump.md`. Pin the published workflow commit SHA; it is consumed directly
 from git, not from the separately downloadable ws-dev plugin archive.
-- **Image:** multi-stage; language-native deps (`uv sync --locked --no-dev` /
-  `bun install --frozen-lockfile`); pin the base image **by digest**
-  (`python:3.12-slim@sha256:…`); **non-root** user; `EXPOSE` the service port. Follow the
-  official `astral-sh/uv-docker-example` (BuildKit cache mounts, `UV_COMPILE_BYTECODE=1`,
-  `--no-install-project` / `--no-editable` layering) for fast, reproducible builds. Add a
-  tight `.dockerignore`. If the app owns migrations, bundle the migration tool + scripts so a
-  deploy runs them from the same image. Wire the runtime health signals into platform probes.
-- **Platforms:** `linux/amd64` by default; add `linux/arm64` only when a target host needs it
+- **Default — Image construction:** multi-stage builds, language-native locked dependencies,
+  `EXPOSE` the service port, tight `.dockerignore`, and the uv Docker example's cache/layering
+  recipes for Python.
+- **Binding — Image security and deployment contract:** digest-pin the base image, run as a
+  non-root user, bundle owned migration tooling/scripts, and wire required platform probes.
+- **Default — Platforms:** `linux/amd64` by default; add `linux/arm64` only when a target host needs it
   (one-line `platforms:` change).
-- Stamp images with `docker/metadata-action` (`org.opencontainers.image.*` labels).
+- **Default — Image metadata:** stamp images with `docker/metadata-action` (`org.opencontainers.image.*` labels).
 - **Build once, then promote.** *Branch builds create releasable artifacts; release builds only
   promote them.* An image is built, scanned, attested, and pushed **exactly once** — on the `main`
   push — and a `v*` tag **relabels that same digest** (no rebuild), so the released image is
@@ -552,11 +657,16 @@ from git, not from the separately downloadable ws-dev plugin archive.
     **append the `sha256:` index digest to the GitHub Release body**. No rebuild, no re-scan. A
     `v*` tag **must** point at a commit a branch build (`main` or `release/**`) already built —
     releasing a never-built commit is a hard error (so tag-only repos add a default-branch build).
-- **Test-gate every build** with real integration tests where cheap (e.g. testcontainers), not
-  drift-prone mocks. **Never publish a release whose image build failed.**
+- **Binding — Build verification:** test-gate every build; never publish a release whose image
+  build failed.
+- **Default — Test dependencies:** use real integration dependencies where cheap, rather than
+  drift-prone mocks.
 
 
 ## Supply-chain integrity
+
+**Authority: Binding.**
+
 Required for every released image, and works regardless of repo visibility:
 - **OCI provenance + SBOM attestations** via `docker/build-push-action` (`provenance: mode=max`,
   `sbom: true`) — BuildKit stores them with the image in the registry; no GitHub-plan
@@ -578,16 +688,19 @@ Required for every released image, and works regardless of repo visibility:
   confirm a found credential is actually live). On adoption, run a one-time full-history baseline
   scan first to confirm nothing has already leaked.
 
-Stronger guarantees, **when available** (don't block on them):
-- **GitHub artifact attestations** (`actions/attest`) for image digests and release artifacts.
+**Default — Optional stronger guarantees**, when available (do not block on them):
+
+- **Default — GitHub artifact attestations** (`actions/attest`) for image digests and release artifacts.
   Private/internal repos require GitHub Enterprise Cloud; public repos work on current plans.
-- **Keyless image signing** with cosign (Sigstore, OIDC), always signing the **digest**, never
+- **Default — Keyless image signing** with cosign (Sigstore, OIDC), always signing the **digest**, never
   a tag. Public-good Sigstore works for private repos but records signing identity metadata in
   the public Rekor log; decide per repo whether that is acceptable.
 - If signing/attestation is unavailable, the baseline remains OCI provenance + SBOM + Trivy.
 
 
 ## Dependency updates
+
+**Authority: Binding.**
 
 Automated dependency updates are standardized org-wide by ADR-020. The policy is **five layers,
 ordered by value not effort**, and Renovate is the sole version-update engine. Every registered
@@ -601,7 +714,19 @@ The preset groups routine non-major updates separately from major updates, keeps
 SHA-pinned except for the deliberate first-party moving-ref policy, and authenticates to
 `npm.pkg.github.com` through its centrally managed `PACKAGES_READ_TOKEN` host rule. A repository may
 add only described `packageRules` and `ignoreDeps` in its generated thin config; the generator
-preserves that documented local seam and rejects mutations to the shared core.
+preserves that documented local seam and rejects mutations to the shared core. A `description` may
+be a string **or an array of strings**, matching Renovate's own schema — Renovate renders the array
+as separate lines in the update PR.
+
+**Carry or refuse — never drop.** Once a `renovate.json` carries the generated core, regeneration
+either carries every local key forward or **refuses**, naming the offending field and writing
+nothing (`renovate.json: packageRules[1] needs a non-empty description …`). It never removes
+repo-owned content silently: a dropped `packageRules` entry is dependency policy deleted inside a
+routine audit PR, which is how ChargeAlert briefly lost its security-override exclusion (PLT-350).
+Fix the named field and re-run sync; if a repository genuinely needs a key outside the seam, file
+PLT rather than hand-editing around the generator. A file that does *not* carry the generated core —
+foreign config, or JSON that does not parse — has no recognizable seam to protect, so `sync` adopts
+the canonical payload as the documented repair.
 
 **The rollout invariant.** Value order is not activation order. **No automated update ecosystem —
 `github-actions` included — activates in a repo until that repo has a stable PR check and that check
@@ -626,11 +751,15 @@ check before it gets automation. Layer 1 before layer 4, per repo.
    GHAS SKU the org declines in favor of gitleaks) or `dependabot_security_updates` (update
    automation, forbidden before layer 1). *Applied.*
 3. **Renovate access to private org packages.** The shared preset's `hostRules` consumes the
-   centrally managed **`PACKAGES_READ_TOKEN`** for `npm.pkg.github.com`. *Applied.*
+   centrally managed **`PACKAGES_READ_TOKEN`** for `npm.pkg.github.com`. *Applied* — and sufficient
+   for every lookup, but see [GitHub Packages](#github-packages) before diagnosing a `401`: a Bun
+   workspace whose private dependency sits in a nested package file does not get this credential
+   into its lockfile install, for reasons upstream of the preset.
 4. **Version updates through the shared Renovate preset and generated thin config.**
    `repo-bootstrap` owns `renovate.json`; the preset owns fleet manager coverage, grouping, pinning,
-   and central package authentication. Bridge's generator additionally owns its source-only
-   graphify pin manager. *Shipped and activated fleet-wide.* homelab keeps its locally owned
+   and central package authentication. Graphify resolves latest stable directly in its refresh
+   job and has no dedicated Renovate pin manager. The preset is activated fleet-wide;
+   homelab keeps its locally owned
    Renovate configuration and is excluded only from the generated Renovate payload.
 5. **`osv-scanner` in CI on the `bun.lock` repos, pinned.** GitHub's dependency graph has no
    resolution path for `bun.lock` (JavaScript is "graph jobs: NO"), so a vulnerability present **only
@@ -660,16 +789,18 @@ question; only a probe of the live graph answers it.
 
 ## Web UI — kit dependency mechanics
 
+**Authority: Default.**
+
 Building or modifying a web app? Use the shared UI spine — don't reinvent it.
 - Repo: `~/Projects/web-ui` (GitHub: `wrightstrategy/web-ui`). Stack: Bun + SvelteKit + Svelte 5.
-- It is the **source of truth for web design standards**: `@wrightstrategy/ui` (semantic tokens +
+- **Binding — Design ownership when consuming the kit:** it is the source of truth for its design standards: `@wrightstrategy/ui` (semantic tokens +
   components), the `create-app` scaffolder, the canonical SvelteKit template, and the design
   canvas (`design/v1.0/` — when canvas and code diverge, the canvas wins).
 - Scaffold new apps with its `create-app`; follow its page recipes and AppShell / PageHeader / token
   conventions (see its `skills/` and `docs/`).
-- Earn-its-place: don't promote a component into the kit before it has 2-app reuse; app-local
+- **Binding — Shared promotion:** earn-its-place: don't promote a component into the kit before it has 2-app reuse; app-local
   styles stay app-local.
-- **The kit is `@wrightstrategy/ui`** (renamed from `@wright/ui` in June 2026; GitHub Packages requires
+- **Binding — Package interface when consuming the kit:** the kit is `@wrightstrategy/ui` (renamed from `@wright/ui` in June 2026; GitHub Packages requires
   the npm scope to equal the owning org). How you depend on it is not a preference — it follows from
   where your app lives:
   - **Inside the web-ui workspace:** `workspace:*`.
@@ -682,6 +813,8 @@ Building or modifying a web app? Use the shared UI spine — don't reinvent it.
 <a id="consuming-private-github-packages"></a>
 
 ## GitHub Packages
+
+**Authority: Binding.**
 
 `@wrightstrategy/ui` is published **private** to `npm.pkg.github.com` (ADR-003). Any repo moved to
 this posture inherits the same rules — and the same trap.
@@ -701,7 +834,26 @@ Beyond that the consumer paths differ — do not assume the Actions recipe cover
 |---|---|---|
 | **Actions job** | `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` | job `permissions:` with **both** `contents: read` and `packages: read` (job-level `permissions` zeroes every omitted scope, so listing only `packages: read` breaks `actions/checkout`) |
 | **Local dev / Docker** | PAT **(classic)** with `read:packages`, from 1Password | Nothing to declare — there is no workflow permission here. The PAT's **owner** must also have read access to the package; the scope alone still 403s. Fine-grained PATs are **not** accepted by this registry, despite the org's general preference for newer token types. Docker mounts it as a BuildKit secret, never a build-arg |
-| **Renovate** | `PACKAGES_READ_TOKEN`, managed in Mend Renovate Cloud | The shared preset's `hostRules` entry for `npm.pkg.github.com`; repositories must not duplicate this in local `renovate.json` |
+| **Renovate** | `PACKAGES_READ_TOKEN`, managed in Mend Renovate Cloud | The shared preset's `hostRules` entry for `npm.pkg.github.com`; repositories must not duplicate this in local `renovate.json`. Sufficient for lookups everywhere, but **not** for the lockfile install in a Bun workspace — see below |
+
+**The Renovate row has a second trap, and its symptom is a `401`.** Renovate's Bun artifact updater
+appends the `hostRules` credential to the `.npmrc` beside the *changed package file*, then runs
+`bun install` beside the *lockfile*. Those are one directory in a single-package repo and the
+install is authenticated. In a Bun **workspace** whose private dependency is declared in a nested
+package file they differ: the token lands where Bun never looks, Bun falls back to the committed
+root `.npmrc`, and `${NODE_AUTH_TOKEN}` expands to nothing outside Actions. The update lands with a
+missing or partial `bun.lock` and `error: GET https://npm.pkg.github.com/... - 401`.
+
+This is upstream [renovatebot/renovate#43255](https://github.com/renovatebot/renovate/issues/43255).
+An unresolvable Mend secret cannot produce it — Renovate abandons the whole repository run rather
+than emitting a PR — but resolution is not validity either, since an expired PAT substitutes
+cleanly and then `401`s. The discriminator is **which package file the failing wave changed**, not
+when it failed: a nested one is this defect whatever the credential's state, because that install
+never receives the credential; a root-only failure does receive it, so that one is a credential
+question to test directly. Having placed it, do not duplicate `hostRules` or add a CI job that
+rewrites `bun.lock` on Renovate branches; regenerate the lockfile by hand on the affected PR.
+Mechanics, blast radius and the interim procedure are in the [shared preset
+README](https://github.com/wrightstrategy/bridge/blob/main/renovate-config/README.md#private-github-packages).
 
 **And in every case, for a private package:**
 - **The package must grant the consuming repo Read** — package settings → ***Manage Actions access*** →
@@ -751,6 +903,9 @@ Before planning on it, inventory what you must restore:
 
 
 ## Knowledge graph (graphify)
+
+**Authority: Binding.**
+
 Repos that use **graphify** (`safishamsi/graphify`, CLI `graphify`) build a knowledge graph
 at `graphify-out/`. Adoption is **explicit**: a repo is a graphify adopter when it is flagged
 `graphify = true` in `registry.toml` (the audit delivers the graphify payload only to marked
@@ -758,12 +913,22 @@ repos). `graphify-out/` is a **`main`-owned** artifact — the model and its rat
 ADR-013 (`docs/adr/013-own-graphify-out-on-main-via-a-post-merge-regen-job-prs-never-modify-it.md`).
 The PR-side graph-**staleness** gate is retired (a branch's committed graph is expected to trail
 `main`, so it no longer fails PRs). The generated adopter payload completes ADR-013 Phase 2: a
-post-merge job installs the fleet-pinned `graphifyy[sql]` distribution, regenerates and commits
+post-merge job installs the latest stable `graphifyy[sql]` distribution, regenerates and commits
 `graphify-out/` on `main` (AST-only, free), while required PR CI rejects any diff under
-`graphify-out/**`. The SQL extra is part of the canonical runtime contract: without it graphify
+`graphify-out/**`. The job uses `uv tool install --upgrade --prerelease disallow 'graphifyy[sql]'` and logs
+`graphify --version`. Upgrades include stable major releases without a Graphify version-bump PR;
+the version log is available for the Actions log-retention period, not durable graph provenance.
+The SQL extra is part of the canonical runtime contract: without it graphify
 classifies SQL but cannot produce the AST hashes required by the manifest integrity gate. The
 workflow uses the org bot App's ruleset bypass and is delivered only after a repo is deliberately
 marked and its protection is ready.
+
+The PLT-202 capability evaluation does not add routine wiki generation or a persistent MCP
+service to the adopted workflow. Use source traversal for configuration that the installed
+release does not represent; CLI queries remain the normal graph interface. On-demand wiki
+exports and temporary stdio MCP remain available without a fleet service commitment. A
+bounded homelab YAML topology experiment is tracked separately in PLT-374; it does not
+authorize a maintained fork or expansion of committed graph coverage.
 
 Phase 2 canonical activation is complete: the guidance workflow checks out the PR merge result plus
 its base parent (`fetch-depth: 2`) and the pinned checker enforces that adopter PRs do not modify
