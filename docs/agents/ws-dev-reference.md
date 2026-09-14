@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=413df39abb6a1f758fadbfa100a5c310c3c46f437bcf3b04e505e9ef18b0e728 -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=b1e496bd17f487aa3e46d918a47fad01170aeeaab9ece174e89aca432cbe3a27 -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -264,7 +264,7 @@ concurrency:
 
 A new PR push then supersedes the older run. Every default-branch commit instead has a unique
 group, so its run can be neither cancelled while running nor displaced while pending. This matters
-when graphify refresh, a release-PR tool such as the deprecated release-please, or a docs/lockfile
+when a release-PR tool such as the deprecated release-please, or a docs/lockfile
 bot pushes an automation commit just after a merge; a saturated runner pool makes it likely that the merge build is still pending when the
 automation run arrives. The observed result was a release tag pointing at a commit for which no
 image had been built. Unique per-SHA groups do not need `queue: max`; PR cancellation cannot
@@ -779,8 +779,7 @@ check before it gets automation. Layer 1 before layer 4, per repo.
    into its lockfile install, for reasons upstream of the preset.
 4. **Version updates through the shared Renovate preset and generated thin config.**
    `repo-bootstrap` owns `renovate.json`; the preset owns fleet manager coverage, grouping, pinning,
-   and central package authentication. Graphify resolves latest stable directly in its refresh
-   job and has no dedicated Renovate pin manager. The preset is activated fleet-wide;
+   and central package authentication. The preset is activated fleet-wide;
    homelab keeps its locally owned
    Renovate configuration and is excluded only from the generated Renovate payload.
 5. **`osv-scanner` in CI on the `bun.lock` repos, pinned.** GitHub's dependency graph has no
