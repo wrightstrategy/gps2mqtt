@@ -1,5 +1,5 @@
 <!-- ws:dev begin — generated; do not hand-edit -->
-<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=075d9f1af3dfebb47ec71b5291438e770ef60a63d40bcb603959eabbccade967 -->
+<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=31319567923dfadd2262c2b4539235fe77650cae0093e4749579188d9ee465c5 -->
 # Coding Universe
 
 Shared Wright Strategy rules: **Binding** boundaries cannot be weakened locally;
@@ -35,7 +35,7 @@ Workflow policy stays in its owning skill; local departures never waive gates or
 - **Default — Python:** use `uv`, not pip; commit `uv.lock`; never commit `.venv/`.
 - **Default — TypeScript:** Bun for agent/scripting code; commit `bun.lock`; `"strict": true`.
 - **Default — Commits:** Conventional Commits, imperative subject <70 chars; body says why.
-- **Binding — Attribution:** agent commits carry truthful `Authored-By: Claude|Codex|Grok`
+- **Binding — Attribution:** agent commits carry truthful `Authored-By: Claude|Codex|Grok|Cursor`
   (reconciliation: `Reconciled-By:`); `Co-Authored-By:` only for authors of shipped bytes.
 - **Binding — Deploy steps:** record required external actions (env, migration, job, cutover,
   out-of-app step) in `deploy/deploy_next.md` in the same PR; edit superseded entries in place.
