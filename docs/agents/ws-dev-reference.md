@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=b1e496bd17f487aa3e46d918a47fad01170aeeaab9ece174e89aca432cbe3a27 -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=d3978aab8a331a19622cfc6777dc6d5aefb21ea34d2eb01d5de019018b33a411 -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -763,7 +763,8 @@ check before it gets automation. Layer 1 before layer 4, per repo.
 
 1. **Required status checks on the default branch, owner-final** (`enforce_admins: false`; the
    only ruleset bypass is the owning admin — the live fleet posture since ADR-006 slice 3,
-   preserved by ADR-007/008 and what the scaffolder creates). Require a context that runs
+   preserved by ADR-007/008 and what the scaffolder now creates as a `main` ruleset). Require a
+   context that runs
    unconditionally on `pull_request` — verified statically at source, not from past runs; a
    path-filtered context qualifies only if the union of its lanes covers every PR. *Applied to all
    active repos*; homelab additionally keeps `enforce_admins: true` by its own choice, with cost
