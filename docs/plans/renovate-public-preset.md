@@ -2,7 +2,7 @@
 
 Authored-By: Codex
 Date: 2026-10-14
-Status: proposed; implementation awaits owner approval
+Status: approved by owner on 2026-10-14; step 1 implemented in PR #112, pending merge
 
 ## Problem and evidence
 
@@ -31,4 +31,4 @@ This is a platform change. From this gps2mqtt worktree, request it through one u
 
 ## Approval boundary
 
-This document authorizes no implementation. Owner approval is required for the public repository and migration design before filing the PLT request or changing gps2mqtt CI/configuration. The platform and local implementation then use their ordinary PR, review, documentation, and deployment gates.
+The owner approved this plan on 2026-10-14. Step 1 is implemented in PR #112, pending merge; the remaining steps follow the platform and local PR, review, documentation, and deployment gates.
