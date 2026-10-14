@@ -70,6 +70,10 @@ python gps2mqtt.py
 
 The application will start reading GPS data from gpsd and publish the information as configured in the ini file.
 
+## Pull request check
+
+Pull requests run `python3 -m py_compile gps2mqtt.py` in GitHub Actions. This checks Python syntax without starting the app; it does not test a GPS device, MQTT broker, or Traccar connection.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
