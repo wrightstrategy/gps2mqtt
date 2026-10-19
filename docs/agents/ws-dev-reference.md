@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=453da2423cc33d4e5d0774007c4b1d6ca47f32c68f7715d8333133cb32a6499b -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=3551bf677bee240693fe655cbf9a777437b9c88074d7c24785a5060ebc7f2c0a -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -410,13 +410,61 @@ touched. Known remaining consumers are bridge's own path-scoped `ci/` driver and
 D20, D21); QuiltShowcase piloted the model before it became the convention.
 
 Common to every tool, with each obligation labeled:
-- **Default — Version source:** the version lives in one place (`pyproject.toml` / `package.json`) and code reads it
-  dynamically — `importlib.metadata.version(...)` in Python, an import from `package.json` in
-  JS/TS — never a hardcoded version literal in source or tests, or the first bump breaks the build.
+- **Default — Version source:** the release tag is the version. Never hardcode a version literal
+  in source or tests, or the first bump breaks the build. Changesets writes the version into
+  `package.json` in the version commit, so JS/TS code may import it from there.
+  python-semantic-release in tag-only mode writes no files, so `pyproject.toml` keeps a
+  placeholder (`0.0.0`) that code never presents as the release version. The image is built
+  before its tag exists (build once, retag), so a Python image identifies itself by commit —
+  the `sha-<full>` tag and the `org.opencontainers.image.revision` label — and the GitHub
+  Release maps that commit to its version.
 - **Binding — Release tags:** nothing tags by hand. The release workflow is the only thing that creates a `v*` tag; a
   hand-pushed tag bypasses the notes, the digest append, and the readiness check.
 - **Binding — Image identity:** the image lane is unchanged: `container-build` release mode resolves the `sha-<full>` digest the
   branch build already pushed for the tagged commit and promotes `:X.Y.Z` / `:X.Y`. Build once, retag.
+
+### Release versions
+
+**Authority: Binding.** Scope: every container image a `wrightstrategy` repository builds that
+homelab runs in production. Third-party images follow their upstream tags under Renovate. Images
+built outside the organization (including the operator's personal `wrightbuilt` account, such as
+stealth-humanizer) are outside this rule by operator ruling. Non-production environments
+(QuiltShowcase `next` and `staging`) may track moving tags; nothing else may.
+
+Homelab is the consumer this contract serves. Its pins advance through bridge's `homelab-bump`
+workflow ([`ci/docs/homelab-bump.md`](https://github.com/wrightstrategy/bridge/blob/main/ci/docs/homelab-bump.md)), which accepts only a stable
+`vX.Y.Z` release and an existing pin already in version-plus-digest form. An app that ships only
+`sha-<commit>` images can be deployed by hand but never updated automatically, and every later
+roll becomes a hand-filed platform request (PLT-465).
+
+- **Numbers:** SemVer 2.0.0 (`MAJOR.MINOR.PATCH`), computed by the release tool from
+  Conventional Commits or changesets under the version consequences below. No date versions,
+  build numbers, or hand-picked numbers.
+- **`1.0.0` at the first production deploy:** no `0.x` release runs in production. An app may
+  release `0.x` before it is deployed; an app already in production on `0.x` makes its next
+  release `1.0.0`. python-semantic-release: `allow_zero_version = false`. Changesets: a `major`
+  changeset. Why: under `0.x` an operator-breaking change is only a minor bump, so the major
+  number stops telling a deployer there is work to do.
+- **Git tag:** `vX.Y.Z`, created only by the release workflow (Release tags, above). A prerelease
+  (`vX.Y.Z-rc.N`) never reaches production.
+- **Image tags:** bare `X.Y.Z` and `X.Y`, the `container-build` release-mode default. Never add a
+  `v`-prefixed image tag. homelab-bump's `tagPrefix: "v"` exists only for pins still being
+  migrated off it.
+- **Production pin:** `ghcr.io/wrightstrategy/<image>:X.Y.Z@sha256:<index digest>`. Never
+  `sha-<commit>`, `edge`, `latest`, or a branch tag, even with a digest.
+- **Pin updates:** the app's release calls `homelab-bump` after its images promote; homelab owns
+  the enrollment. No app-owned workflow writes homelab with its own token. Exception: homelab
+  records an app as manually pinned, with the reason, in its deployment-types document —
+  QuiltShowcase, whose production deploys are deliberate operator acts, and public
+  repositories, which cannot call bridge's private reusable workflows. A manual pin still takes
+  the production pin form.
+- **Before the first production deploy:** (1) the app has its release workflow (sections below)
+  and has cut a release of at least `1.0.0`; (2) the homelab deployment PR pins that release —
+  and, for an automatically updated app, enrolls the image in `.github/homelab-bump.json`;
+  (3) only then does an automatically updated app add its `homelab-bump` caller, because a
+  caller that runs before enrollment fails with `No targets enrolled`. A manually pinned app
+  stops after step 2 with the pin and its recorded exception. Record the remaining steps in the
+  app's `deploy/deploy_next.md`.
 
 ### Python: python-semantic-release, tag-only, from a dispatched workflow
 
@@ -441,7 +489,7 @@ Common to every tool, with each obligation labeled:
   Push the tag with the org bot **App token**, never `GITHUB_TOKEN`: a tag pushed with the default
   token does not trigger the downstream release workflow (the OPS-1 lesson).
 - **Config (`pyproject.toml`):** tag format `v{version}`; the conventional-commit parser; no version
-  files (see the dynamic-read rule above); branch patterns for `main` and `release/.*`;
+  files (see Version source above); branch patterns for `main` and `release/.*`;
   `remote.type = "github"`. `CHANGELOG.md` is retired — the Release body is the changelog, and the
   committed file was what forced the release commit. **The tool's defaults do not produce the
   version consequences below; set them explicitly.** The conventional parser's default
@@ -653,7 +701,8 @@ The `homelab-bump` workflow automatically commits enrolled image pins after a su
 stable release. Homelab owns its target mapping and activation policy; app callers supply
 the release tag and App configuration. Its contract is `wrightstrategy/bridge` →
 `ci/docs/homelab-bump.md`. Pin the published workflow commit SHA; it is consumed directly
-from git, not from the separately downloadable ws-dev plugin archive.
+from git, not from the separately downloadable ws-dev plugin archive. The version, tag, and pin
+forms it relies on, and the first-deploy order, are [Release versions](#release-versions).
 - **Default — Image construction:** multi-stage builds, language-native locked dependencies,
   `EXPOSE` the service port, tight `.dockerignore`, and the uv Docker example's cache/layering
   recipes for Python.
