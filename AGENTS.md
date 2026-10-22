@@ -1,5 +1,5 @@
 <!-- ws:dev begin — generated; do not hand-edit -->
-<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=31319567923dfadd2262c2b4539235fe77650cae0093e4749579188d9ee465c5 -->
+<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=04e3710d77678ed939ab33abcc7373df0450186eef4b02f0630d3bcab4c37ff4 -->
 # Coding Universe
 
 Shared Wright Strategy rules: **Binding** boundaries cannot be weakened locally;
@@ -51,11 +51,15 @@ Workflow policy stays in its owning skill; local departures never waive gates or
   Finish with `ws-dev:doc-audit` or `docs not needed: <reason>`.
 - **Default — Releases:** Python: python-semantic-release, tag-only, dispatched; JS/TS:
   Changesets. release-please is deprecated; migrate when release tooling is touched.
+- **Binding — Release versions:** an org-built image homelab runs in production ships SemVer releases
+  from `1.0.0` before first deploy (tag `vX.Y.Z`, image `X.Y.Z`); pin `X.Y.Z@sha256:…`.
 - **Binding — Release information:** accurate deployment changes, breaking changes and image
   index digest let a deployer bump a pin without reading source. Preserve published interfaces.
 - **Binding — Platform:** outside the platform stream never write `bridge`, `homelab`,
-  `dotfiles`, or the cluster (no clone, PR, `kubectl`, SSH); file PLT. Inside it, write all three
-  under the target repo's own gates. Existing owner-authorized exceptions retain their scope.
+  `dotfiles`, or the cluster, nor SSH to platform hosts; file PLT. Reads are open: those repos
+  and read-only `kubectl` (no Secret data, `exec`, `port-forward`, `proxy`). Inside the stream,
+  write all three under the target repo's own gates. Existing owner-authorized exceptions retain
+  their scope.
 - **Binding — Instruction files:** `AGENTS.md` is canonical; `CLAUDE.md` is the one-line
   `@AGENTS.md` adapter. Generated content changes at its source, via `repo-bootstrap`.
 - **Default — Local guidance:** smallest useful layout outside generated blocks.
@@ -72,7 +76,7 @@ Read the applicable source; its rule labels govern. These pointers add no waiver
 | ship images or touch secret-scan gates | `docs/agents/ws-dev-reference.md#supply-chain-integrity` |
 | edit Dependabot/Renovate config, registries, or osv-scanner | `docs/agents/ws-dev-reference.md#dependency-updates` |
 | write a deploy step, or rotate/file the deploy-steps file | `docs/agents/ws-dev-reference.md#deploy-steps` |
-| set up release automation, cut a release, or hotfix production | `docs/agents/ws-dev-reference.md#versioning--releases` |
+| set up releases, cut one, hotfix, or first deploy an app to homelab | `docs/agents/ws-dev-reference.md#versioning--releases` |
 | touch GitHub Packages auth (a 403 or Renovate 401 on "correct" config is this) | `docs/agents/ws-dev-reference.md#github-packages` |
 | build or modify a web app | `wrightstrategy/web-ui` — shared UI spine, `create-app`, earn-its-place |
 | parallelize or isolate work in an Orca runtime | `docs/agents/ws-dev-reference.md#parallel-and-isolated-work` |
