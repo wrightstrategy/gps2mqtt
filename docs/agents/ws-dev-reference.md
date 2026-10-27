@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=604a79903d7314431cf66a45e8165cf0ed4255ce0f839c9c521de4e31d16706a -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=6b492475b89fc798ad3a2d8a8e19a6fc38ed9f98e386f05e3c114ab38dc4345e -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -755,7 +755,13 @@ Required for every released image, and works regardless of repo visibility:
   the gate. Prefer this OSS path over **GitHub Secret Protection** (GHAS secret-scanning SKU,
   ~$19/active-committer/month on private repos) — don't pay for what gitleaks does for free on a
   small private repo. Run the **pinned** gitleaks binary/container directly (avoid
-  `gitleaks/gitleaks-action`, which wants a free-but-annoying org `GITLEAKS_LICENSE`). Optionally
+  `gitleaks/gitleaks-action`, which wants a free-but-annoying org `GITLEAKS_LICENSE`). The
+  pre-commit hook is the generated `ws:gitleaks` block in `.githooks/pre-commit` (a repo-bootstrap
+  payload; never hand-edit it): it runs the checksum-verified release binary on the host and fails
+  closed on any download, checksum or scan error. Never scan a bind mount of the repository from a
+  container at commit time — it silently misses linked worktrees and git's temporary index. The
+  repository's Orca setup script activates the hook with `git config core.hooksPath .githooks`.
+  CI runs the same release as a pinned container in git history mode. Optionally
   add a **scheduled** `trufflehog` deep scan for **verified** detection (it calls provider APIs to
   confirm a found credential is actually live). On adoption, run a one-time full-history baseline
   scan first to confirm nothing has already leaked.
