@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=6b492475b89fc798ad3a2d8a8e19a6fc38ed9f98e386f05e3c114ab38dc4345e -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=04ad8835597663253f2899c8f31641e2f54bc96e17dae479e29f9d3cb335d67c -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -67,9 +67,19 @@ long batch, or work that must not touch the session checkout — run it through 
 orchestration** inside a ready runtime (`orca status --json`): visible `worker-start` /
 `check --wait`, one worktree per worker, results verified by the session agent with real
 commands, never trusted from a worker's self-report. Orca's shipped skills carry the
-invocation mechanics; this payload does not duplicate them. Workers never dispatch onward.
+invocation mechanics; this payload does not duplicate them. Workers never start further
+Orca workers. Running `ws-dev:pr-review` and its `ws-gates-review` reviewer on a worker's
+own PR is not onward Orca dispatch.
+
 However the bytes were produced, they meet the same cross-family review gate
-(`ws-dev:pr-review`) before the human merge gate.
+(`ws-dev:pr-review`) before the human merge gate. A worker that opens an implementation PR
+runs that gate, reconciles findings, and records its terminal outcome before reporting
+completion. The coordinator's task brief must assign this ownership without forbidding
+review tooling. The coordinator verifies the delivered diff, current PR head, required CI,
+and the worker's terminal review comment and gate record. It does not run a second review
+or record an equivalence pass for that PR. A worker's gate-hold remains a hold. If the
+coordinator changes shipped bytes after the verdict, the coordinator owns the existing
+post-verdict delta or new-review process for the changed head.
 
 ### Worker release before teardown
 
