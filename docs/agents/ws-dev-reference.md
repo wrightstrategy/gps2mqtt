@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=04ad8835597663253f2899c8f31641e2f54bc96e17dae479e29f9d3cb335d67c -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=c3290bd140b17d876548fa61d38720b823d2697d12f14c118e484d9c59f3feac -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -770,7 +770,8 @@ Required for every released image, and works regardless of repo visibility:
   payload; never hand-edit it): it runs the checksum-verified release binary on the host and fails
   closed on any download, checksum or scan error. Never scan a bind mount of the repository from a
   container at commit time — it silently misses linked worktrees and git's temporary index. The
-  repository's Orca setup script activates the hook with `git config core.hooksPath .githooks`.
+  hook runs because dotfiles' `~/.gitconfig` sets `core.hooksPath = .githooks` for every
+  `wrightstrategy` clone (on an unmanaged machine, set it per clone).
   CI runs the same release as a pinned container in git history mode. Optionally
   add a **scheduled** `trufflehog` deep scan for **verified** detection (it calls provider APIs to
   confirm a found credential is actually live). On adoption, run a one-time full-history baseline
