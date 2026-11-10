@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=c3290bd140b17d876548fa61d38720b823d2697d12f14c118e484d9c59f3feac -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=20b17625b504cdd26d01351401d1acda47d9fd2c7023746467f3c9a858436e33 -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -172,7 +172,7 @@ truth only in code, issue threads, or historical plans.
 - Preserve historical documents as history. The ADR mechanism is retired (documentation
   standard §6): every `docs/adr/` directory is a frozen archive — never write, supersede, or
   re-status an ADR. A decision lands as an edit to the owning living document plus a dated
-  entry in the repo's `docs/decisions.md`, in the same PR that implements it.
+  entry file in the repo's `docs/decisions/`, in the same PR that implements it.
 - Before finishing implementation work, invoke **`ws-dev:doc-audit`**. The skill contains the
   organization documentation standard and semantic reconciliation workflow. Update the affected
   docs, or report `docs not needed: <specific reason>` when the change genuinely leaves documented
@@ -1001,6 +1001,6 @@ Before planning on it, inventory what you must restore:
 **Retired 2026-09-13 (PLT-388).** Graphify is no longer part of the agent-ready repository
 contract: no repository commits a knowledge graph, carries a graph refresh workflow or checker,
 or is expected to answer codebase questions from a graph. Read source directly. The decision and
-its evidence are recorded in bridge `docs/decisions.md` (2026-09-13 entry) and the removal order
+its evidence are recorded in bridge `docs/decisions/2026-09-13-plt-388-retire-graphify-fleet-wide.md` and the removal order
 in `docs/specs/2026-09-13-plt-388-graphify-retirement-plan.md`. Until a repository's removal PR
 merges, a leftover `graphify-out/` directory is ordinary tracked content that a PR may delete.
