@@ -1,5 +1,5 @@
 <!-- ws:dev begin — generated; do not hand-edit -->
-<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=04e3710d77678ed939ab33abcc7373df0450186eef4b02f0630d3bcab4c37ff4 -->
+<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=687e75b11b991d367045b79dfd9b3e87d36fadd49861c144a1364b144ae2b6af -->
 # Coding Universe
 
 Shared Wright Strategy rules: **Binding** boundaries cannot be weakened locally;
@@ -38,8 +38,8 @@ Workflow policy stays in its owning skill; local departures never waive gates or
 - **Binding — Attribution:** agent commits carry truthful `Authored-By: Claude|Codex|Grok|Cursor`
   (reconciliation: `Reconciled-By:`); `Co-Authored-By:` only for authors of shipped bytes.
 - **Binding — Deploy steps:** record required external actions (env, migration, job, cutover,
-  out-of-app step) in `deploy/deploy_next.md` in the same PR; edit superseded entries in place.
-  Follow the reference's existing migration scope for repos still on `Deploy:` trailers.
+  out-of-app step) as a `deploy/next/` entry in the same PR; edit superseded entries in place.
+  Follow the reference's migration scope for repos on `deploy_next.md` or `Deploy:` trailers.
 - **Default — Testing:** `bun test` / `pytest`; behavioral test names; real dependencies over
   mocks that can drift. Required checks and verification obligations remain in force.
 - **Default — CI runners:** private CI uses `runs-on: [self-hosted, ci]` (fresh VM, no LAN);
@@ -47,7 +47,7 @@ Workflow policy stays in its owning skill; local departures never waive gates or
 - **Default — Runtime:** one foreground process, stdout/stderr logs, clean `SIGTERM`;
   HTTP `/healthz` + `/readyz`; explicit, idempotent migrations. Preserve actual consumer contracts.
 - **Binding — Docs:** reconcile living/reference docs with changes. Decisions land in their
-  living home plus dated `docs/decisions.md` entries; ADRs are frozen (never extend or supersede).
+  living home plus a dated `docs/decisions/` entry; ADRs are frozen (never extend or supersede).
   Finish with `ws-dev:doc-audit` or `docs not needed: <reason>`.
 - **Default — Releases:** Python: python-semantic-release, tag-only, dispatched; JS/TS:
   Changesets. release-please is deprecated; migrate when release tooling is touched.

@@ -1,4 +1,4 @@
-<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=c3290bd140b17d876548fa61d38720b823d2697d12f14c118e484d9c59f3feac -->
+<!-- ws:dev-reference source=wrightstrategy/bridge:conventions/dev-reference.md version=1 sha256=6a676e384fa3292cdff844509be043cc9380ddd9eb0681653266936991da244b -->
 This file is generator-owned by ws-dev repo-bootstrap; do not hand-edit it.
 
 # Coding Universe — reference
@@ -172,7 +172,7 @@ truth only in code, issue threads, or historical plans.
 - Preserve historical documents as history. The ADR mechanism is retired (documentation
   standard §6): every `docs/adr/` directory is a frozen archive — never write, supersede, or
   re-status an ADR. A decision lands as an edit to the owning living document plus a dated
-  entry in the repo's `docs/decisions.md`, in the same PR that implements it.
+  entry file in the repo's `docs/decisions/`, in the same PR that implements it.
 - Before finishing implementation work, invoke **`ws-dev:doc-audit`**. The skill contains the
   organization documentation standard and semantic reconciliation workflow. Update the affected
   docs, or report `docs not needed: <specific reason>` when the change genuinely leaves documented
@@ -473,8 +473,8 @@ roll becomes a hand-filed platform request (PLT-465).
   and, for an automatically updated app, enrolls the image in `.github/homelab-bump.json`;
   (3) only then does an automatically updated app add its `homelab-bump` caller, because a
   caller that runs before enrollment fails with `No targets enrolled`. A manually pinned app
-  stops after step 2 with the pin and its recorded exception. Record the remaining steps in the
-  app's `deploy/deploy_next.md`.
+  stops after step 2 with the pin and its recorded exception. Record the remaining steps as
+  entries in the app's `deploy/next/`.
 
 ### Python: python-semantic-release, tag-only, from a dispatched workflow
 
@@ -573,8 +573,10 @@ roll becomes a hand-filed platform request (PLT-465).
 **The record is a file, not commit history.** Anything a change needs outside the image — a new,
 renamed, or removed environment variable; a migration that needs ordering or a hand step; a
 scheduled job; an ordered cutover; an out-of-app step such as a DNS record, a webhook subscription,
-or a provider dashboard setting — is an entry in `deploy/deploy_next.md`, added in the same PR as
-the change that needs it.
+or a provider dashboard setting — is an entry in `deploy/next/`, added in the same PR as the change
+that needs it. Each pending entry is its own file, `deploy/next/YYYY-MM-DD-<kebab-slug>.md`, so
+concurrent PRs never edit the same lines (PLT-600). A `deploy/next/README.md` describing the folder
+is not an entry.
 
 The org used a `Deploy:` commit trailer until 2026-09. It failed for a structural reason, not a
 QuiltShowcase-specific one: **git history is append-only.** When a later commit changed what an
@@ -590,8 +592,13 @@ including repos far smaller than the one that found it.
 **Authority: Binding.**
 
 - **Read the pending entries before adding one.** If your change alters or cancels an entry already
-  there, **edit that entry in place** and say what changed. Never leave two entries that disagree —
-  that is the exact failure this convention exists to prevent.
+  there, **edit that entry's file in place** and say what changed, or delete the file when nothing
+  that shipped still needs the step. Never leave two entries that disagree — that is the exact
+  failure this convention exists to prevent.
+- **One entry per file:** one `##` title, then the entry's body.
+- **Order is file-name order**, which is chronological. Steps that must run in a fixed order belong
+  in one entry, as an ordered cutover already does. When an entry depends on another, its `When:`
+  names that entry's file.
 - **Automatic work is not an entry.** Whatever the container or the deploy already does on every
   tier — migrations, schedule sync, health-check provisioning — needs no entry. An entry is for
   what a person or a separate system must do.
@@ -614,8 +621,8 @@ including repos far smaller than the one that found it.
 
 Documentation does not enforce this; CI does. Name the handful of paths in your repo that almost
 always imply an out-of-app step — the env-var example file, the webhook handler table, the feature
-switch registry, the container entrypoint — and fail a PR that touches one of them without touching
-`deploy/deploy_next.md`. Keep the workflow paths-filtered so it is skipped everywhere else.
+switch registry, the container entrypoint — and fail a PR that touches one of them without adding
+or editing a file in `deploy/next/`. Keep the workflow paths-filtered so it is skipped everywhere else.
 QuiltShowcase's `deploy-steps.yml` is the worked example. A repo whose out-of-app steps are rare
 enough that no path predicts them does not need the gate; it still keeps the file.
 
@@ -627,9 +634,11 @@ The authoring side needs no skill: the entry shape above plus this gate is the w
 
 The pending file rotates when the code **ships**, not when its steps are finished.
 
-- **A repo that cuts releases** files the pending file as `deploy/deploy_vX.Y.Z.md` during the cut,
-  then starts a fresh empty pending file. The version number is the index: a promotion reads every
-  versioned file between the tier's current pin and the candidate, in order.
+- **A repo that cuts releases** files the pending entries as `deploy/deploy_vX.Y.Z.md` during the
+  cut — the `deploy/next/` files joined in file-name order — then empties `deploy/next/`. The
+  version number is the index: a promotion reads every versioned file between the tier's current
+  pin and the candidate, in order. Filed files keep one file per release; joining at the cut adds
+  no job, because the cut already happens.
 - **A single-tier repo that deploys straight from `main`** rotates on the deploy instead, by date or
   deploy number. Same rule, different name.
 
@@ -651,8 +660,18 @@ an entry that a later version withdrew, naming that version. Rollback reads the 
 The file and edit-in-place are Binding; the entry shape is Default. Versioned files at the
 cut, `Done:` marks, and the cross-version promotion read are machinery for *promotion*: they earn
 their place when a repo has more than one tier or a release cut, and not before. A single-tier repo
-with neither keeps one `deploy/deploy_next.md`, rotates it on deploy, and stops there. Do not
-install a promotion model in a repo that has nothing to promote.
+with neither keeps `deploy/next/`, files it on deploy, and stops there. Do not install a promotion
+model in a repo that has nothing to promote.
+
+### Repos still on `deploy/deploy_next.md`
+
+**Authority: Binding.**
+
+A repository has either `deploy/next/` or a single pending `deploy/deploy_next.md`, never both. The
+single file follows every rule above except one-entry-per-file. A repository whose tooling reads
+`deploy/deploy_next.md` by name moves to `deploy/next/` when that release tooling is next touched,
+the same rule the org uses for release-please; the move updates the tooling and any path-filtered
+gate together. Nothing else forces the move.
 
 ### Release notes
 
@@ -664,7 +683,7 @@ install a promotion model in a repo that has nothing to promote.
   source" rule mechanical: a deployer reads the top of the Release and the digest at the bottom,
   nothing else. The section is the contract, not the template — a repo on another release tool
   renders the same section by whatever means it has.
-- The tagged tree holds the same entries under the pending name when filing follows the tag, or
+- The tagged tree holds the same entries under the pending location when filing follows the tag, or
   under the filed version name when the cut is a release commit, so **a tag alone is a complete
   record**.
 - **Default — Promotion diagnostics:** a promotion check may diff environment key names across
@@ -1001,6 +1020,6 @@ Before planning on it, inventory what you must restore:
 **Retired 2026-09-13 (PLT-388).** Graphify is no longer part of the agent-ready repository
 contract: no repository commits a knowledge graph, carries a graph refresh workflow or checker,
 or is expected to answer codebase questions from a graph. Read source directly. The decision and
-its evidence are recorded in bridge `docs/decisions.md` (2026-09-13 entry) and the removal order
+its evidence are recorded in bridge `docs/decisions/2026-09-13-plt-388-retire-graphify-fleet-wide.md` and the removal order
 in `docs/specs/2026-09-13-plt-388-graphify-retirement-plan.md`. Until a repository's removal PR
 merges, a leftover `graphify-out/` directory is ordinary tracked content that a PR may delete.
