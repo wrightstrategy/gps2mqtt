@@ -1,5 +1,5 @@
 <!-- ws:dev begin — generated; do not hand-edit -->
-<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=04e3710d77678ed939ab33abcc7373df0450186eef4b02f0630d3bcab4c37ff4 -->
+<!-- ws:dev source=wrightstrategy/bridge:conventions/dev.md version=1 sha256=f4aa6cf599f7d3509a2ea411b6387689f8f85153e6f99e3e699182bdc7b88ff8 -->
 # Coding Universe
 
 Shared Wright Strategy rules: **Binding** boundaries cannot be weakened locally;
@@ -47,7 +47,7 @@ Workflow policy stays in its owning skill; local departures never waive gates or
 - **Default — Runtime:** one foreground process, stdout/stderr logs, clean `SIGTERM`;
   HTTP `/healthz` + `/readyz`; explicit, idempotent migrations. Preserve actual consumer contracts.
 - **Binding — Docs:** reconcile living/reference docs with changes. Decisions land in their
-  living home plus dated `docs/decisions.md` entries; ADRs are frozen (never extend or supersede).
+  living home plus a dated `docs/decisions/` entry; ADRs are frozen (never extend or supersede).
   Finish with `ws-dev:doc-audit` or `docs not needed: <reason>`.
 - **Default — Releases:** Python: python-semantic-release, tag-only, dispatched; JS/TS:
   Changesets. release-please is deprecated; migrate when release tooling is touched.
